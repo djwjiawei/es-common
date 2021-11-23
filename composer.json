@@ -1,0 +1,22 @@
+{
+    "name": "es-swoole/common",
+    "description": "easy-swoole common",
+    "autoload": {
+        "psr-4": {
+            "EsSwoole\\Base\\": "src/"
+        },
+        "files": ["src/autoload.php"]
+    },
+    "authors": [
+        {
+            "name": "djw",
+            "email": "dongjw.1@jifenn.com"
+        }
+    ],
+    "require": {
+        "easyswoole/easyswoole": "3.4.x",
+        "easyswoole/redis-pool": "^2.2",
+        "easyswoole/smtp": "^2.0",
+        "easyswoole/http-client": "^1.5"
+    }
+}
