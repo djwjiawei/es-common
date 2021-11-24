@@ -23,6 +23,33 @@ if (!function_exists('config')) {
         return Config::getInstance()->getConf($key);
     }
 }
+if (!function_exists('configPath')) {
+    /**
+     * 获取配置文件路径
+     * @param $key
+     * @return array|mixed|null
+     * User: dongjw
+     * Date: 2021/11/19 15:03
+     */
+    function configPath($path = '')
+    {
+        return EASYSWOOLE_ROOT . '/config/' . $path;
+    }
+}
+
+if (!function_exists('configPath')) {
+    /**
+     * 获取vendor包配置文件路径
+     * @param $key
+     * @return array|mixed|null
+     * User: dongjw
+     * Date: 2021/11/19 15:03
+     */
+    function configVendorPath($path = '')
+    {
+        return EASYSWOOLE_ROOT . '/vendor/' . $path;
+    }
+}
 
 if (!function_exists('getCurrentMilliseconds')) {
     /**

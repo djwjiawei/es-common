@@ -10,8 +10,10 @@ return [
         'exception' => [
             //过期时间
             'mailTimeout' => 300,
-            //异常发送邮件
-            'sendBugMail' => ''
+            //异常发送邮件收件人地址
+            'sendBugMail' => '',
+            //异常redis记录连接(默认default)
+            'redis' => ''
         ],
         'mail' => [
             'default' => [
