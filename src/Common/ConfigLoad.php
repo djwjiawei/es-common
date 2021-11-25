@@ -21,6 +21,7 @@ class ConfigLoad
         if (!$fileArr || empty($fileArr['files'])) {
             return false;
         }
+        $noBeforeDir = rtrim($noBeforeDir,DIRECTORY_SEPARATOR);
         foreach ($fileArr['files'] as $file) {
             $pathinfo = pathinfo($file);
             //只对文件扩展名是php的加载

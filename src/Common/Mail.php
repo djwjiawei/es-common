@@ -98,11 +98,11 @@ class Mail
      */
     public static function smartSend($subject,$body,$to,$isBatch = true,$connection = 'default')
     {
-        if (RequestUtil::getRequest()) {
-            //http请求中 异步发送
+        if (isWorkerProcess()) {
+            //worker进程中 异步发送
             return self::asyncSendMail($subject,$body,$to,$isBatch,$connection);
         }else{
-            //不在http中 同步发送
+            //不在worker进程中 同步发送
             return self::syncSendMail($subject,$body,$to,$isBatch,$connection);
         }
     }

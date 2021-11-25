@@ -46,7 +46,7 @@ class Logger implements LoggerInterface
      */
     function log(?string $msg,int $logLevel = self::LOG_LEVEL_DEBUG,string $category = 'info')
     {
-        $subDir = $this->logDir . '/' . date('Ymd');
+        $subDir = $this->logDir . '/' . date('Y-m-d');
         if (!is_dir($subDir)) {
             File::createDirectory($subDir);
         }
