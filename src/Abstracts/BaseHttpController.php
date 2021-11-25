@@ -14,6 +14,7 @@ use EsSwoole\Base\Util\RequestUtil;
 use EsSwoole\Base\Log\HttpClientLog;
 use EasySwoole\Http\AbstractInterface\Controller;
 use EasySwoole\Validate\Validate;
+use EsSwoole\Base\Common\Api;
 
 abstract Class BaseHttpController extends Controller
 {

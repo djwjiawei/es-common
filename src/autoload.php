@@ -33,21 +33,7 @@ if (!function_exists('configPath')) {
      */
     function configPath($path = '')
     {
-        return EASYSWOOLE_ROOT . '/config/' . $path;
-    }
-}
-
-if (!function_exists('configVendorPath')) {
-    /**
-     * 获取vendor包配置文件路径
-     * @param $key
-     * @return array|mixed|null
-     * User: dongjw
-     * Date: 2021/11/19 15:03
-     */
-    function configVendorPath($path = '')
-    {
-        return EASYSWOOLE_ROOT . '/config/vendor/' . $path;
+        return EASYSWOOLE_ROOT . '/Config' . ($path ? DIRECTORY_SEPARATOR . $path : '');
     }
 }
 
@@ -136,5 +122,18 @@ if (!function_exists('getRequestIp')) {
             }
         }
         return '';
+    }
+}
+
+if (!function_exists('isWorkerProcess')) {
+    /**
+     * 是否是worker进程
+     * @return mixed|string
+     * User: dongjw
+     * Date: 2021/9/13 17:11
+     */
+    function isWorkerProcess()
+    {
+        return \EasySwoole\EasySwoole\ServerManager::getInstance()->getSwooleServer()->worker_id >= 0;
     }
 }

@@ -74,6 +74,7 @@ class PublishConfig implements CommandInterface
             }
             return new ArrayToTextTable($table);
         }
+        return null;
     }
 
     public function help(CommandHelpInterface $commandHelp): CommandHelpInterface

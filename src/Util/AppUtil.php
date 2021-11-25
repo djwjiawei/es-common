@@ -12,6 +12,15 @@ namespace EsSwoole\Base\Util;
 class AppUtil
 {
 
+    //开发环境
+    const DEV_ENV = 'dev';
+
+    //测试环境
+    const TEST_ENV = 'test';
+
+    //生产环境
+    const PROD_ENV = 'prod';
+
     /**
      * 是否是生产环境
      * @return bool
@@ -20,7 +29,7 @@ class AppUtil
      */
     public static function isProd()
     {
-        return config('APP_ENV') == 'prod' ? true :false;
+        return config('APP_ENV') == self::PROD_ENV ? true :false;
     }
 
     /**
