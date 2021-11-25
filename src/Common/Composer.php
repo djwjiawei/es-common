@@ -35,7 +35,7 @@ class Composer
             }
          }
          */
-        if (!$this->hasInit) {
+        if ($this->hasInit) {
             return false;
         }
         $installJsonPath = EASYSWOOLE_ROOT . '/vendor/composer/installed.json';
@@ -43,7 +43,8 @@ class Composer
             throw new \Exception("composer installed.json不存在");
         }
         $installedArr = json_decode(file_get_contents($installJsonPath),true);
-        foreach ($installedArr as $vendor) {
+        $packagesArr = $installedArr['packages'] ?? [];
+        foreach ($packagesArr as $vendor) {
             if (!isset($vendor['extra']['es-swoole'])) {
                 continue;
             }

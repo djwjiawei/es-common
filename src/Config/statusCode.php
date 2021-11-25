@@ -7,9 +7,7 @@
  */
 
 return [
-    'statusCode' => [
-        'success' => 0,
-        'fail' => -1,
-        'param' => 506
-    ]
+    'success' => 0,
+    'fail' => -1,
+    'param' => 506
 ];

@@ -100,8 +100,7 @@ class ExceptionHandler
         Di::getInstance()->set(SysConst::SHUTDOWN_FUNCTION, function () {
             //只对非worker进程记录日志，worker进程在EasySwooleEvent onRequest全局事件中单独处理
             $error = error_get_last();
-            $workerId = ServerManager::getInstance()->getSwooleServer()->worker_id;
-            if (!empty($error) && $workerId < 0) {
+            if ($error) {
                 $l = new Location();
                 $l->setFile($error['file']);
                 $l->setLine($error['line']);

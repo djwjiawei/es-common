@@ -6,12 +6,13 @@
  * Time: 11:03
  */
 
-namespace EsSwoole\Command;
+namespace EsSwoole\Base\Command;
 
 use EasySwoole\Command\AbstractInterface\CommandHelpInterface;
 use EasySwoole\Command\AbstractInterface\CommandInterface;
 use EasySwoole\Command\Color;
 use EasySwoole\Command\CommandManager;
+use EasySwoole\Utility\ArrayToTextTable;
 use EasySwoole\Utility\File;
 use EsSwoole\Base\Abstracts\ConfigPublishInterface;
 use EsSwoole\Base\Common\Composer;
@@ -53,15 +54,32 @@ class PublishConfig implements CommandInterface
                     File::createDirectory($desDir);
                 }
                 File::copyFile($source,$destination,false);
-                echo Color::success($source . " copy: " . $destination . 'success') . PHP_EOL;
+                echo Color::success("copy: " . $source . " - " . $destination . ' success') . PHP_EOL;
             }
+        }else{
+            $vendorConfig = Composer::getInstance()->getConfigPublish();
+            if (!$vendorConfig) {
+                return Color::warning("未发现需要发布的配置包");
+            }
+            $table = [];
+            foreach ($vendorConfig as $vendor => $publish) {
+                $obj = new $publish();
+                if (!($obj instanceof ConfigPublishInterface)) {
+                    echo Color::warning("{$vendorConfig} 未实现接口类") . PHP_EOL;
+                }
+                $table[] = [
+                    'name' => $vendor,
+                    'publishClass' => $publish
+                ];
+            }
+            return new ArrayToTextTable($table);
         }
     }
 
     public function help(CommandHelpInterface $commandHelp): CommandHelpInterface
     {
         // 添加 自定义action 可选参数
-        $commandHelp->addActionOpt('--vendor=', 'vendor包名');
+        $commandHelp->addActionOpt('--vendor=', 'vendor包名,没有展示所有发现的配置包');
         return $commandHelp;
     }
 

@@ -7,7 +7,7 @@
  */
 
 use EasySwoole\EasySwoole\Config;
-use EsSwoole\Util\RequestUtil;
+use EsSwoole\Base\Util\RequestUtil;
 
 
 if (!function_exists('config')) {
@@ -37,7 +37,7 @@ if (!function_exists('configPath')) {
     }
 }
 
-if (!function_exists('configPath')) {
+if (!function_exists('configVendorPath')) {
     /**
      * 获取vendor包配置文件路径
      * @param $key
@@ -47,7 +47,7 @@ if (!function_exists('configPath')) {
      */
     function configVendorPath($path = '')
     {
-        return EASYSWOOLE_ROOT . '/vendor/' . $path;
+        return EASYSWOOLE_ROOT . '/config/vendor/' . $path;
     }
 }
 

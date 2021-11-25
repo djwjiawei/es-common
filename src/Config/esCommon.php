@@ -6,24 +6,22 @@
  * Time: 15:23
  */
 return [
-    'esCommon' => [
-        'exception' => [
-            //过期时间
-            'mailTimeout' => 300,
-            //异常发送邮件收件人地址
-            'sendBugMail' => '',
-            //异常redis记录连接(默认default)
-            'redis' => ''
-        ],
-        'mail' => [
-            'default' => [
-                'host' => '',
-                'port' => '', //默认465
-                'username' => '',
-                'password' => '',
-                'from' => '',
-                'timeout' => '' //默认5s
-            ]
+    'exception' => [
+        //过期时间
+        'mailTimeout' => 300,
+        //异常发送邮件收件人地址
+        'sendBugMail' => '',
+        //异常redis记录连接(默认default)
+        'redis' => ''
+    ],
+    'mail' => [
+        'default' => [
+            'host' => 'smtp.163.com',
+            'port' => '465', //默认465
+            'username' => 'yunjifen2020@163.com',
+            'password' => 'NZLDIMFUDDTPWXNL',
+            'from' => '{}服务',
+            'timeout' => '' //默认5s
         ]
     ]
 ];

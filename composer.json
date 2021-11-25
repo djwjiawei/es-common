@@ -21,7 +21,8 @@
     },
     "extra": {
         "es-swoole": {
-            "config" : "EsSwoole\\Base\\ConfigPublish"
+            "config" : "EsSwoole\\Base\\ConfigPublish",
+            "provider" : "EsSwoole\\Base\\Provider\\EsProvider"
         }
     }
 }
