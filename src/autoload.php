@@ -7,6 +7,8 @@
  */
 
 use EasySwoole\EasySwoole\Config;
+use EasySwoole\EasySwoole\Trigger;
+use EasySwoole\Trigger\Location;
 use EsSwoole\Base\Util\RequestUtil;
 
 
@@ -135,5 +137,31 @@ if (!function_exists('isWorkerProcess')) {
     function isWorkerProcess()
     {
         return \EasySwoole\EasySwoole\ServerManager::getInstance()->getSwooleServer()->worker_id >= 0;
+    }
+}
+
+if (!function_exists('goTry')) {
+    /**
+     * 捕获go的异常
+     * @return mixed|string
+     * User: dongjw
+     * Date: 2021/9/13 17:11
+     */
+    function goTry(callable $callable)
+    {
+        return go(function ()use($callable){
+            try {
+                $callable();
+            } catch (Throwable $e) {
+                $l = new \EasySwoole\Trigger\Location();
+                $l->setFile($e->getFile());
+                $l->setLine($e->getLine());
+                $description = "协程go未捕获异常: " . $e->getMessage();
+                \EasySwoole\EasySwoole\Trigger::getInstance()->error($description, E_USER_ERROR, $l);
+
+                //发送邮件
+                \EsSwoole\Base\Exception\ExceptionHandler::report($e,$description);
+            }
+        });
     }
 }

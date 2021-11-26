@@ -14,7 +14,6 @@ use EsSwoole\Base\Util\AppUtil;
 use EsSwoole\Base\Log\HttpClientLog;
 use EsSwoole\Base\Redis\ExceptionRedis;
 use EasySwoole\Component\Di;
-use EasySwoole\EasySwoole\ServerManager;
 use EasySwoole\EasySwoole\SysConst;
 use EasySwoole\EasySwoole\Trigger;
 use EasySwoole\Http\Message\Status;
@@ -119,7 +118,7 @@ class ExceptionHandler
      * User: dongjw
      * Date: 2021/9/5 18:30
      */
-    public static function report(\Throwable $exception)
+    public static function report(\Throwable $exception, $msg = '')
     {
         $file = $exception->getFile();
         $line = $exception->getLine();
@@ -154,9 +153,9 @@ class ExceptionHandler
                 }
             }
 
-            $errorMsg = "<b>错误描述：</b>" . $exception->getMessage() . "<hr/>";
+            $des = $msg ?: $exception->getMessage();
+            $errorMsg = "<b>错误描述：</b>" . $des . "<hr/>";
             $errorTrace = "<b>错误trace：</b><br/>" . $exception->getTraceAsString();
-
             //发送的邮件主题
             $subject = "【" . config('APP_ENV') . "环境】{$runEnv}错误报告【" . date('Y-m-d H:i:s') . "】";
 

@@ -8,7 +8,6 @@
 
 namespace EsSwoole\Base\Task;
 
-use EasySwoole\Component\Singleton;
 use EsSwoole\Base\Common\Mail;
 use EasySwoole\EasySwoole\Trigger;
 use EasySwoole\Task\AbstractInterface\TaskInterface;
