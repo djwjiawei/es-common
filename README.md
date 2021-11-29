@@ -6,7 +6,7 @@
 "repositories": [
     {
         "type": "git",
-        "url": "git@git.dev.enbrands.com:ebs/php/easyswoole_common.git"
+        "url": "git@git.dev.enbrands.com:X/php/interaction/easyswoole_common.git"
     }
 ]
 

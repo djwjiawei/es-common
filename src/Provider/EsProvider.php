@@ -12,7 +12,6 @@ namespace EsSwoole\Base\Provider;
 use EsSwoole\Base\Common\ConfigLoad;
 use EsSwoole\Base\Log\Logger;
 use EasySwoole\Component\Di;
-use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\SysConst;
 use EsSwoole\Base\Abstracts\AbstractProvider;
 use EsSwoole\Base\Exception\ExceptionHandler;
@@ -28,7 +27,9 @@ class EsProvider extends AbstractProvider
         $this->mergeConfig(__DIR__ . '/../config/statusCode.php','statusCode');
 
         //设置日志handler
-        Di::getInstance()->set(SysConst::LOGGER_HANDLER, new Logger());
+        $logger = new Logger();
+        Di::getInstance()->set(SysConst::LOGGER_HANDLER, $logger);
+        \EasySwoole\EasySwoole\Logger::getInstance($logger);
 
         //注册异常
         ExceptionHandler::injectException();
