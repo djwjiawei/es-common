@@ -14,7 +14,7 @@
 composer require es-swoole/common:(dev-master或具体tag)
 ```
 
-## 开发计划
+## 已开发功能
 - [x] 日志格式化
 - [x] 请求链路日志记录
 - [x] 异常处理
@@ -23,8 +23,7 @@ composer require es-swoole/common:(dev-master或具体tag)
 - [x] config包发布
 - [x] 服务提供者功能
 - [x] 一些公共函数
-- [ ] 协程异常处理
-- [ ] nacos集成
+- [x] 向指定进程同步信息
 
 ## 使用步骤
 1. 安装easyswoole
