@@ -29,7 +29,7 @@ class ServiceProvider
     public function registerVendor()
     {
         if ($this->hasRegist) {
-            return true;
+            return false;
         }
         $providerArr = Composer::getInstance()->getProvider();
         foreach ($providerArr as $provider) {
@@ -38,7 +38,7 @@ class ServiceProvider
                 $obj->register();
             }
         }
-        return false;
+        return true;
     }
 
     /**
@@ -50,7 +50,7 @@ class ServiceProvider
     public function bootVendor()
     {
         if ($this->hasBoot) {
-            return true;
+            return false;
         }
         $providerArr = Composer::getInstance()->getProvider();
         foreach ($providerArr as $provider) {
@@ -59,6 +59,6 @@ class ServiceProvider
                 $obj->boot();
             }
         }
-        return false;
+        return true;
     }
 }

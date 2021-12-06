@@ -11,7 +11,6 @@ namespace EsSwoole\Base\Common;
 
 use EasySwoole\Component\Process\Manager;
 use EasySwoole\EasySwoole\ServerManager;
-use EasySwoole\EasySwoole\Task\TaskManager;
 
 class ProcessSync
 {
@@ -27,19 +26,6 @@ class ProcessSync
     public static function syncWorker($body, $workerId)
     {
         return ServerManager::getInstance()->getSwooleServer()->sendMessage($body, $workerId);
-    }
-
-    /**
-     * 同步到task进程
-     * @param $task
-     * @param $taskProcessId
-     * @return int|null
-     * User: dongjw
-     * Date: 2021/11/29 15:59
-     */
-    public static function syncTask($task, $taskProcessId)
-    {
-        return TaskManager::getInstance()->async($task, null, $taskProcessId);
     }
 
     /**
@@ -69,13 +55,13 @@ class ProcessSync
      */
     public static function syncByPid($body, $pid)
     {
-        $process = Manager::getInstance()->getProcessByPid($pid);
-        if (!$process) {
+        $tableProcess = Manager::getInstance()->getProcessTable()->get($pid);
+        if (!$tableProcess) {
             return false;
         }
         return self::syncProcess(
-            $process->getConfig()->getProcessGroup(),
-            $process->getConfig()->getProcessName(),
+            $tableProcess['group'],
+            $tableProcess['name'],
             $body,
             $pid
         );
@@ -104,8 +90,9 @@ class ProcessSync
             "{$serverName}.Crontab" => 1
         ];
 
+        $currentPid = posix_getpid();
         foreach (Manager::getInstance()->info() as $pid => $item) {
-            if (isset($noSync[$pid]) || isset($noSyncGroup[$item['group']])) {
+            if (isset($noSync[$pid]) || isset($noSyncGroup[$item['group']]) || $currentPid == $pid) {
                 continue;
             }
             $return[$pid] = self::syncByPid($body, $pid);
@@ -117,12 +104,9 @@ class ProcessSync
     {
         $serverName = config('SERVER_NAME');
         switch ($group) {
-            case $serverName . "Worker":
+            case "{$serverName}.Worker":
                 $workerId = explode('.',$name)[2];
                 return self::syncWorker($body, $workerId);
-            case $serverName . "TaskWorker":
-                $taskProcessId = explode('.',$name)[2];
-                return self::syncTask($body, $taskProcessId);
             default:
                 return self::syncCustomProcess($body, $pid);
         }
