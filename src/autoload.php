@@ -7,8 +7,6 @@
  */
 
 use EasySwoole\EasySwoole\Config;
-use EasySwoole\EasySwoole\Trigger;
-use EasySwoole\Trigger\Location;
 use EsSwoole\Base\Util\RequestUtil;
 
 

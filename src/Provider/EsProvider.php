@@ -40,7 +40,7 @@ class EsProvider extends AbstractProvider
         //替换框架内的AbstractProcess,用来分发进程启动事件
         file_put_contents(
             EASYSWOOLE_ROOT . '/vendor/easyswoole/component/src/Process/AbstractProcess.php',
-            file_get_contents(__DIR__ . '../Abstracts/AbstractReplaceProcess.php')
+            file_get_contents(__DIR__ . '/../Abstracts/AbstractReplaceProcess.php')
         );
     }
 

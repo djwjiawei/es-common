@@ -33,4 +33,15 @@ class CoroutineUtil
         }
         return $topId;
     }
+
+    /**
+     * 是否在协程中
+     * @return bool
+     * User: dongjw
+     * Date: 2021/12/6 15:17
+     */
+    public static function isInCoroutine()
+    {
+        return Coroutine::getCid() > 0;
+    }
 }

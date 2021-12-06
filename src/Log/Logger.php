@@ -101,6 +101,7 @@ class Logger implements LoggerInterface
 
         //如果不是httpclient或trigger，则再获取打印日志的代码位置信息
         if (!in_array($category,[self::HTTP_REQUEST,self::TRIGGER])) {
+            $logLocation = [];
             $debugTrace = debug_backtrace();
             //清除当前调用栈
             array_shift($debugTrace);
@@ -113,10 +114,8 @@ class Logger implements LoggerInterface
                     break;
                 }
                 if($tempLocation['class'] == \EasySwoole\EasySwoole\Logger::class){
-                    $tempBeforeLocation = $tempLocation;
+                    $logLocation = $tempLocation;
                 }else{
-                    //如果不是说明调用log停止
-                    $logLocation = $tempBeforeLocation ?? null;
                     break;
                 }
             }
