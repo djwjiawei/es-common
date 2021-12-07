@@ -6,7 +6,7 @@
 "repositories": [
     {
         "type": "git",
-        "url": "git@git.dev.enbrands.com:ebs/php/easyswoole_common.git"
+        "url": "git@git.dev.enbrands.com:X/php/interaction/easyswoole_common.git"
     }
 ]
 
@@ -14,7 +14,7 @@
 composer require es-swoole/common:(dev-master或具体tag)
 ```
 
-## 开发计划
+## 已开发功能
 - [x] 日志格式化
 - [x] 请求链路日志记录
 - [x] 异常处理
@@ -23,8 +23,7 @@ composer require es-swoole/common:(dev-master或具体tag)
 - [x] config包发布
 - [x] 服务提供者功能
 - [x] 一些公共函数
-- [ ] 协程异常处理
-- [ ] nacos集成
+- [x] 向指定进程同步信息
 
 ## 使用步骤
 1. 安装easyswoole
@@ -70,4 +69,16 @@ $this->fail('msg');
 
 //5. http请求
 //有需要调用第三方接口的,可以继承\EsSwoole\Base\Request\AbstractRequest该类,请求结束会自动记录响应日志
+
+//6. 进程通信
+//向worker进程发消息
+\EsSwoole\Base\Common\ProcessSync::syncWorker('',0);
+//向task进程发消息
+\EsSwoole\Base\Common\ProcessSync::syncTask('',0);
+//向自定义进程发消息
+\EsSwoole\Base\Common\ProcessSync::syncCustomProcess('',100);
+//通过进程id向指定进程发消息
+\EsSwoole\Base\Common\ProcessSync::syncByPid('',100);
+//向全部进程发消息
+\EsSwoole\Base\Common\ProcessSync::syncAllProcess('');
 ```

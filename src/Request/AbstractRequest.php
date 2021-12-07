@@ -90,7 +90,8 @@ abstract class AbstractRequest
 
         $this->method = $method;
 
-        $client = $this->client = new HttpClient($this->getApiDomain());
+        $apiDomain = $this->getApiDomain();
+        $client = $this->client = new HttpClient($apiDomain);
 
         //设置连接超时时间
         $client->setConnectTimeout($this->connectTimeout);
@@ -116,7 +117,7 @@ abstract class AbstractRequest
                 $logAction .= '?' .  http_build_query($params);
             }
             $res = $client->get();
-            }else if ($method == HttpClient::METHOD_POST) {
+        }else if ($method == HttpClient::METHOD_POST) {
             $contentType = $header[self::HEADER_CONTENT_TYPE] ?? '';
             $res = $client->post($contentType == HttpClient::CONTENT_TYPE_APPLICATION_JSON ? json_encode($params) : $params);
         }else if ($method == HttpClient::METHOD_PUT) {
@@ -129,7 +130,7 @@ abstract class AbstractRequest
 
         HttpClientLog::log([
             'logTag' => $res->getErrCode() === 0 ? '_http_success' : '_http_failure',
-            'callee' => $this->apiDomain,
+            'callee' => $apiDomain,
             'request' => $logParams,
             'uri' => $logAction,
             'response' => $res->getBody(),
