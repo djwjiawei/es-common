@@ -23,9 +23,6 @@ class EsProvider extends AbstractProvider
 {
     public function register()
     {
-        //加载config目录的配置
-        ConfigLoad::loadDir(configPath(),configPath());
-
         //合并该包配置
         $this->mergeConfig(__DIR__ . '/../config/statusCode.php','statusCode');
 

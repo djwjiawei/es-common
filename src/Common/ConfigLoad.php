@@ -15,7 +15,16 @@ use EasySwoole\Utility\File;
 class ConfigLoad
 {
 
-    public static function loadDir($dir,$noBeforeDir)
+    /**
+     * 加载配置目录
+     * @param $dir string 需要加载的目录
+     * @param $noBeforeDir string 不要的目录前缀
+     * @param string $filterExt string 允许的文件前缀
+     * @return bool
+     * User: dongjw
+     * Date: 2021/12/8 17:44
+     */
+    public static function loadDir($dir,$noBeforeDir,$allowExt = '')
     {
         $fileArr = File::scanDirectory($dir);
         if (!$fileArr || empty($fileArr['files'])) {
@@ -24,8 +33,9 @@ class ConfigLoad
         $noBeforeDir = rtrim($noBeforeDir,DIRECTORY_SEPARATOR);
         foreach ($fileArr['files'] as $file) {
             $pathinfo = pathinfo($file);
-            //只对文件扩展名是php的加载
-            if ($pathinfo['extension'] != 'php') {
+            //对扩展名检查
+            $extCheckRes = $allowExt ? ($pathinfo['extension'] == $allowExt) : true;
+            if (!$extCheckRes) {
                 continue;
             }
             //替换不要的前缀dir

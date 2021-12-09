@@ -10,6 +10,7 @@ namespace EsSwoole\Base\Provider;
 
 use EasySwoole\Component\Singleton;
 use EsSwoole\Base\Common\Composer;
+use EsSwoole\Base\Common\ConfigLoad;
 
 class ServiceProvider
 {
@@ -19,6 +20,28 @@ class ServiceProvider
     protected $hasRegist = false;
 
     protected $hasBoot = false;
+
+    protected $providerArr = [];
+
+    public function __construct()
+    {
+        //加载config目录的配置
+        ConfigLoad::loadDir(configPath(),configPath(),'php');
+
+        //发现的服务提供者
+        $providerArr = array_values(Composer::getInstance()->getProvider());
+
+        //需要排序的服务提供者
+        $configProviderSort = config('esCommon.provider');
+
+        //先按配置的顺序加载
+        $sortProvider = array_intersect($configProviderSort, $providerArr);
+
+        //最后再加载剩下的
+        $remainProvider = array_diff($providerArr, $configProviderSort);
+
+        $this->providerArr = array_merge($sortProvider, $remainProvider);
+    }
 
     /**
      * 调用vendor包服务提供者的register方法(写在EasySwooleEvent的initialize方法中,可以在该方法中合并配置、初始化工作)
@@ -31,8 +54,7 @@ class ServiceProvider
         if ($this->hasRegist) {
             return false;
         }
-        $providerArr = Composer::getInstance()->getProvider();
-        foreach ($providerArr as $provider) {
+        foreach ($this->providerArr as $provider) {
             $obj = new $provider();
             if (method_exists($obj, 'register')) {
                 $obj->register();
@@ -52,8 +74,7 @@ class ServiceProvider
         if ($this->hasBoot) {
             return false;
         }
-        $providerArr = Composer::getInstance()->getProvider();
-        foreach ($providerArr as $provider) {
+        foreach ($this->providerArr as $provider) {
             $obj = new $provider();
             if (method_exists($obj, 'boot')) {
                 $obj->boot();

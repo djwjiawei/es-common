@@ -23,5 +23,8 @@ return [
             'from' => '{}服务',
             'timeout' => '' //默认5s
         ]
+    ],
+    'provider' => [
+        \EsSwoole\Base\Provider\EsProvider::class
     ]
 ];
