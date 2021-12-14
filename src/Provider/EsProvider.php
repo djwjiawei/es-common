@@ -18,6 +18,7 @@ use EasySwoole\Component\Di;
 use EasySwoole\EasySwoole\SysConst;
 use EsSwoole\Base\Abstracts\AbstractProvider;
 use EsSwoole\Base\Exception\ExceptionHandler;
+use EsSwoole\Base\Middleware\MiddlewareManager;
 
 class EsProvider extends AbstractProvider
 {
@@ -39,6 +40,9 @@ class EsProvider extends AbstractProvider
             EASYSWOOLE_ROOT . '/vendor/easyswoole/component/src/Process/AbstractProcess.php',
             file_get_contents(__DIR__ . '/../Abstracts/AbstractReplaceProcess.php')
         );
+
+        //中间件初始化
+        MiddlewareManager::getInstance();
     }
 
     public function boot()

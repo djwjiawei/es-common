@@ -29,6 +29,8 @@ class RequestMiddleware implements MiddlewareInterface
             'number' => __LINE__,
             'msg' => '==请求开始==',
         ]);
+
+        return true;
     }
 
     public function after(Request $request, BaseHttpController $response)

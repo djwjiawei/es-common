@@ -91,6 +91,7 @@ class MiddlewareManager
         if (!$middlewareIndex) {
             return true;
         }
+        //在after时翻转中间件索引
         $reverseIndex = array_reverse($middlewareIndex);
         foreach ($reverseIndex as $index) {
             if (!$this->middlewareList[$index]) {
@@ -119,6 +120,7 @@ class MiddlewareManager
             if ($uri == '*') {
                 $type = self::GLOBAL_TYPE;
             }else if (strpos($uri,'*') !== false) {
+                //出现*时认为是正则中间件
                 $type = self::REGULAR_TYPE;
             }else{
                 $type = self::STATIC_TYPE;
@@ -126,16 +128,20 @@ class MiddlewareManager
             foreach ($uriMiddlewareArr as $middleware) {
                 $tmpIndex = $this->middlewareList[$middleware] ?? null;
                 if (!$tmpIndex) {
+                    //push中间件到list中,值为index
                     $tmpIndex = $this->middlewareList[$middleware] = $middlewareIndex;
                     $middlewareIndex++;
                 }
+                //全局中间件直接存储
                 if ($type == self::GLOBAL_TYPE) {
                     $this->middlewareRule[$type][] = $tmpIndex;
                 }else{
+                    //静态和正则中间件需要加uri匹配
                     $this->middlewareRule[$type][$uri][] = $tmpIndex;
                 }
             }
         }
+        //key与value互换,将key设为索引,目的是减少内存开销
         $this->middlewareList = array_flip($this->middlewareList);
         return true;
     }
@@ -164,13 +170,14 @@ class MiddlewareManager
                 }
             }
             if ($regularMiddleware) {
+                //如果匹配成功了,加到缓存中,下次直接冲缓存中取
                 $regularMiddleware = $this->uriRegularMiddlewareIndex[$uri] = array_unique($regularMiddleware);
             }
         }
         return array_unique(
             array_merge(
                 $this->middlewareRule[self::GLOBAL_TYPE],
-                $this->middlewareRule[self::STATIC_TYPE][$uri],
+                $this->middlewareRule[self::STATIC_TYPE][$uri] ?: [],
                 $regularMiddleware
             )
         );
