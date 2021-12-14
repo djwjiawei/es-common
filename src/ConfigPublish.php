@@ -18,6 +18,7 @@ class ConfigPublish implements ConfigPublishInterface
         return [
             __DIR__ . '/config/esCommon.php' => configPath('esCommon.php'),
             __DIR__ . '/config/statusCode.php' => configPath('statusCode.php'),
+            __DIR__ . '/config/middleware.php' => configPath('middleware.php'),
         ];
     }
 }

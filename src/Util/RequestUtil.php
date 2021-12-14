@@ -75,4 +75,35 @@ class RequestUtil
         }
         return false;
     }
+
+    public static function getJsonData()
+    {
+        $request = self::getRequest();
+        if (!$request) {
+            return [];
+        }
+        $raw = $request->getBody()->__toString();
+        if ($raw) {
+            return json_decode($raw, true) ?: [];
+        }
+        return [];
+    }
+
+    public static function getAllInput($key = '',$default = null)
+    {
+        $request = self::getRequest();
+        if (!$request) {
+            return [];
+        }
+        $rawData = [];
+        $raw = $request->getBody()->__toString();
+        if ($raw) {
+            $rawData = json_decode($raw, true) ?: [];
+        }
+        $data = array_merge($request->getRequestParam() ?: [],$rawData);
+        if ($key) {
+            return $data[$key] ?? $default;
+        }
+        return $data;
+    }
 }
