@@ -113,6 +113,48 @@ abstract class AbstractRedisPool
         },$this->connection,$this->poolTimeout);
     }
 
+    /**
+     * zadd,如果keu不存在设置过期时间
+     * @param $key
+     * @param $score
+     * @param $member
+     * @param $expireTime
+     * @return mixed|null
+     * User: dongjw
+     * Date: 2021/12/14 18:13
+     */
+    public function zaddLock($key, $score, $member, $expireTime)
+    {
+        return RedisPool::invoke(function (Redis $redis) use($key, $score, $member, $expireTime) {
+            return $redis->rawCommand([
+                'eval',
+                $this->getZaddExpireLua(),
+                '1',
+                $key,
+                $score,
+                $member,
+                $expireTime
+            ]);
+        },$this->connection,$this->poolTimeout);
+    }
+
+    protected function getZaddExpireLua()
+    {
+        return <<<'LUA'
+--先判断有序集合是否存在
+if(redis.call('exists', KEYS[1)) then
+    -- 添加有序集合的数据
+    return redis.call('zadd', KEYS[1], ARGV[1], ARGV[2])
+else
+    -- 添加有序集合的数据
+    local val = redis.call('zadd', KEYS[1], ARGV[1], ARGV[2])
+    -- 设置过期时间
+    redis.call('expire', KEYS[1], ARGV[3]) 
+    return val
+end
+LUA;
+    }
+
     public function __call($name, $arguments)
     {
         return RedisPool::invoke(function (Redis $redis) use($name,$arguments) {
