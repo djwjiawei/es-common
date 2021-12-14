@@ -8,11 +8,11 @@
 
 namespace EsSwoole\Base\Provider;
 
-
 use EasySwoole\EasySwoole\ServerManager;
 use EasySwoole\Task\AbstractInterface\TaskInterface;
 use EsSwoole\Base\Abstracts\ProcessMessageInterface;
 use EsSwoole\Base\Common\ConfigLoad;
+use EsSwoole\Base\Common\Prometheus;
 use EsSwoole\Base\Log\Logger;
 use EasySwoole\Component\Di;
 use EasySwoole\EasySwoole\SysConst;
@@ -24,12 +24,16 @@ class EsProvider extends AbstractProvider
     public function register()
     {
         //合并该包配置
-        $this->mergeConfig(__DIR__ . '/../config/statusCode.php','statusCode');
+        $this->mergeConfig(__DIR__ . '/../config/statusCode.php', 'statusCode');
 
         //设置日志handler
         $logger = new Logger();
         Di::getInstance()->set(SysConst::LOGGER_HANDLER, $logger);
         \EasySwoole\EasySwoole\Logger::getInstance($logger);
+
+        //注入Prometheus实例
+        $prometheus = new Prometheus();
+        Di::getInstance()->set('prometheus', $prometheus);
 
         //注册异常
         ExceptionHandler::injectException();
@@ -48,16 +52,16 @@ class EsProvider extends AbstractProvider
             $task = unserialize($message);
             if (is_callable($task)) {
                 call_user_func($task);
-            }else if ($task instanceof TaskInterface) {
-                try{
-                    $task->run(0,$serv->worker_id);
-                }catch (\Throwable $throwable){
-                    $task->onException($throwable,0,$serv->worker_id);
+            } else if ($task instanceof TaskInterface) {
+                try {
+                    $task->run(0, $serv->worker_id);
+                } catch (\Throwable $throwable) {
+                    $task->onException($throwable, 0, $serv->worker_id);
                 }
-            }else if ($task instanceof ProcessMessageInterface) {
-                try{
+            } else if ($task instanceof ProcessMessageInterface) {
+                try {
                     $task->run();
-                }catch (\Throwable $throwable){
+                } catch (\Throwable $throwable) {
                     $task->onException($throwable);
                 }
             }
