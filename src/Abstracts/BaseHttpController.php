@@ -9,31 +9,29 @@
 namespace EsSwoole\Base\Abstracts;
 
 
+use EsSwoole\Base\Middleware\MiddlewareManager;
 use EsSwoole\Base\Util\AppUtil;
-use EsSwoole\Base\Util\RequestUtil;
 use EsSwoole\Base\Log\HttpClientLog;
 use EasySwoole\Http\AbstractInterface\Controller;
-use EasySwoole\Validate\Validate;
 use EsSwoole\Base\Common\Api;
+use EsSwoole\Base\Util\ValidateUtil;
 
 abstract Class BaseHttpController extends Controller
 {
 
-    public function onRequest(?string $action): ?bool
+    protected function onRequest(?string $action): ?bool
     {
-        //request注入
-        RequestUtil::injectRequest($this->request());
-
-        //log记录
-        HttpClientLog::log([
-            'logTag' => '_request_in',
-            'fileName' => __FILE__,
-            'functionName' => __FUNCTION__,
-            'number' => __LINE__,
-            'msg' => '==请求开始==',
-        ]);
-
+        //执行中间件
+        $middlewareBeforeRes = MiddlewareManager::getInstance()->handelBefore($this->request(),$this);
+        if (!$middlewareBeforeRes) {
+            return false;
+        }
         return true;
+    }
+
+    protected function afterAction(?string $actionName): void
+    {
+        MiddlewareManager::getInstance()->handelAfter($this->request(),$this);
     }
 
     public function outJson($code = 0,$msg = '',$data = [])
@@ -75,42 +73,45 @@ abstract Class BaseHttpController extends Controller
 
     public function validateGet($rules)
     {
-        return $this->_validate($rules,$this->request()->getQueryParams());
+        return $this->validateData($rules,$this->request()->getQueryParams());
     }
 
     public function validateForm($rules)
     {
-        return $this->_validate($rules,$this->request()->getParsedBody());
+        return $this->validateData($rules,$this->request()->getParsedBody());
     }
 
     public function validateJson($rules)
     {
-        return $this->_validate($rules,json_decode($this->request()->getBody()->__toString(),true) ?: []);
+        return $this->validateData($rules,$this->getJsonData());
     }
 
     public function validate($rules)
     {
         //将get query和post body与raw数据合并进行校验
-        $params = $this->request()->getRequestParam() ?: [];
-        $raw = $this->request()->getBody()->__toString();
-        if ($raw) {
-            $rawArr = json_decode($raw, true) ?: [];
-            $params = array_merge($params, $rawArr);
-        }
-        return $this->_validate($rules,$params);
+        return $this->validateData($rules,$this->getAllInput());
     }
 
-    private function _validate($rules,$params)
+    public function validateData($rules,$params)
     {
         if (!$params) {
             return Api::arr(config('statusCode.param'),'请求参数为空');
         }
-        $validate = Validate::make($rules);
-        $res = $validate->validate($params);
-        if(!$res){
-            return Api::arr(config('statusCode.param'),$validate->getError()->__toString());
+        return ValidateUtil::validate($rules,$params);
+    }
+
+    public function getJsonData()
+    {
+        $raw = $this->request()->getBody()->__toString();
+        if ($raw) {
+            return json_decode($raw, true) ?: [];
         }
-        return Api::arr(config('statusCode.success'),'',$params);
+        return [];
+    }
+
+    public function getAllInput()
+    {
+        return array_merge($this->request()->getRequestParam() ?: [],$this->getJsonData());
     }
 
     /**

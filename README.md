@@ -24,6 +24,7 @@ composer require es-swoole/common:(dev-master或具体tag)
 - [x] 服务提供者功能
 - [x] 一些公共函数
 - [x] 向指定进程同步信息
+- [x] 中间件
 
 ## 使用步骤
 1. 安装easyswoole
@@ -81,4 +82,7 @@ $this->fail('msg');
 \EsSwoole\Base\Common\ProcessSync::syncByPid('',100);
 //向全部进程发消息
 \EsSwoole\Base\Common\ProcessSync::syncAllProcess('');
+
+//7. 中间件(在middleware配置文件中添加对应的中间件)
+//支持1. 全局中间件(*) 2.路由完全匹配中间件 3.路由正则中间件(/index/*/test; /index*; /index/te*/dong$)
 ```

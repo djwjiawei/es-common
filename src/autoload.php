@@ -163,3 +163,54 @@ if (!function_exists('goTry')) {
         });
     }
 }
+
+if (!function_exists('retryDuration')) {
+    /**
+     * 重试指定持续时间，每次间隔多少秒
+     * @param callable $callable
+     * @param float|int $duration 持续多长时间/单位秒 最小0.001秒(1毫秒)
+     * @param int $sleep 每次重试间隔多长时间/单位秒  最小0.001秒(1毫秒)
+     * @return bool
+     * User: dongjw
+     * Date: 2021/12/13 19:15
+     */
+    function retryDuration(callable $callable,$duration = 1,$sleep = 0.1)
+    {
+        //最小时长 1毫秒
+        $minTime = 1;
+        try {
+            //将秒转化为毫秒
+            $duration = $duration * 1000;
+            $sleep = $sleep *1000;
+
+            //做最小时间比对
+            $duration = ($duration < $minTime) ? $minTime : $duration;
+            $sleep = ($sleep < $minTime) ? $minTime : $sleep;
+
+            //重试次数
+            $retryTimes = 1;
+            $startTime = getCurrentMilliseconds();
+
+            beginning:
+            $res = $callable();
+            if ($res) {
+                return $res;
+            }else{
+                throw new \Exception('return false');
+            }
+        } catch (\Throwable $e) {
+            $debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS,1);
+            \EasySwoole\EasySwoole\Logger::getInstance()->error("retry exception:{$e->getMessage()} {$debug['file']}:{$debug['line']} retryTimes:{$retryTimes}");
+
+            //持续时间到了，直接return
+            if (getCurrentMilliseconds() - $startTime >= $duration) {
+                return false;
+            }
+
+            $retryTimes++;
+
+            usleep($sleep * 1000);
+            goto beginning;
+        }
+    }
+}
