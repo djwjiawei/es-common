@@ -9,6 +9,8 @@
 namespace EsSwoole\Base\Abstracts;
 
 
+use EasySwoole\Component\Di;
+use EasySwoole\EasySwoole\SysConst;
 use EsSwoole\Base\Middleware\MiddlewareManager;
 use EsSwoole\Base\Util\AppUtil;
 use EsSwoole\Base\Log\HttpClientLog;
@@ -22,7 +24,7 @@ abstract Class BaseHttpController extends Controller
     protected function onRequest(?string $action): ?bool
     {
         //执行中间件
-        $middlewareBeforeRes = MiddlewareManager::getInstance()->handelBefore($this->request(),$this);
+        $middlewareBeforeRes = MiddlewareManager::getInstance()->handelBefore($this->request(),$this->response());
         if (!$middlewareBeforeRes) {
             return false;
         }
@@ -31,29 +33,17 @@ abstract Class BaseHttpController extends Controller
 
     protected function afterAction(?string $actionName): void
     {
-        MiddlewareManager::getInstance()->handelAfter($this->request(),$this);
+        MiddlewareManager::getInstance()->handelAfter($this->request(),$this->response());
     }
 
     public function outJson($code = 0,$msg = '',$data = [])
     {
         if (!$this->response()->isEndResponse()) {
-            $data = Array(
+            $this->response()->write(json_encode([
                 "code" => $code,
                 "msg" => $msg,
                 "data" => $data
-            );
-            //log记录
-            HttpClientLog::log([
-                'logTag' => '_request_out',
-                'fileName' => __FILE__,
-                'functionName' => __FUNCTION__,
-                'number' => __LINE__,
-                'code' => $data['code'],
-                'response' => json_encode($data, JSON_UNESCAPED_UNICODE),
-                'elapsed' => AppUtil::getElapsedTime(),
-                'msg' => '==请求结束==||==消耗内存' . AppUtil::getMemoryUsage() . '==',
-            ]);
-            $this->response()->write(json_encode($data));
+            ],JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $this->response()->withHeader('Content-type', 'application/json;charset=utf-8');
             return true;
         } else {
@@ -123,6 +113,18 @@ abstract Class BaseHttpController extends Controller
     protected function actionNotFound(?string $action)
     {
         $this->fail('no action match');
+    }
+
+    /**
+     * 重写异常捕获,以便中间件可以拿到异常时的响应
+     * @param \Throwable $throwable
+     * @throws \Throwable
+     * User: dongjw
+     * Date: 2021/12/15 12:49
+     */
+    protected function onException(\Throwable $throwable): void
+    {
+        call_user_func(Di::getInstance()->get(SysConst::HTTP_EXCEPTION_HANDLER),$throwable,$this->request(),$this->response());
     }
 
 }

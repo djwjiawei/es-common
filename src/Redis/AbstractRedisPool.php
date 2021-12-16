@@ -142,14 +142,15 @@ abstract class AbstractRedisPool
     {
         return <<<'LUA'
 --先判断有序集合是否存在
-if(redis.call('exists', KEYS[1)) then
-    -- 添加有序集合的数据
+local exists = redis.call('exists', KEYS[1])
+if(exists == 1)
+then
+    -- 存在,添加有序集合的数据
     return redis.call('zadd', KEYS[1], ARGV[1], ARGV[2])
 else
-    -- 添加有序集合的数据
+    -- 不存在,添加有序集合的数据 并设置过期时间
     local val = redis.call('zadd', KEYS[1], ARGV[1], ARGV[2])
-    -- 设置过期时间
-    redis.call('expire', KEYS[1], ARGV[3]) 
+    redis.call('expire', KEYS[1], ARGV[3])
     return val
 end
 LUA;

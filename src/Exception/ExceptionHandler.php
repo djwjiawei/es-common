@@ -60,20 +60,8 @@ class ExceptionHandler
                 ExceptionHandler::report($throwable);
             });
 
-            //返回记录
-            HttpClientLog::log([
-                'logTag' => '_request_out',
-                'fileName' => __FILE__,
-                'functionName' => __FUNCTION__,
-                'number' => __LINE__,
-                'code' => $result['code'],
-                'response' => json_encode($result, JSON_UNESCAPED_UNICODE),
-                'elapsed' => AppUtil::getElapsedTime(),
-                'msg' => '==请求结束==||==消耗内存' . AppUtil::getMemoryUsage() . '==',
-            ]);
-
+            $response->write(json_encode($result,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $response->withHeader('Content-type', 'application/json;charset=utf-8');
-            $response->write(json_encode($result));
         });
 
         //设置set_error_handler

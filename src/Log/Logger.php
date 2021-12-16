@@ -102,7 +102,7 @@ class Logger implements LoggerInterface
         //如果不是httpclient或trigger，则再获取打印日志的代码位置信息
         if (!in_array($category,[self::HTTP_REQUEST,self::TRIGGER])) {
             $logLocation = [];
-            $debugTrace = debug_backtrace();
+            $debugTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
             //清除当前调用栈
             array_shift($debugTrace);
             //清除框架logger调用栈
