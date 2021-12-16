@@ -11,7 +11,7 @@ namespace EsSwoole\Base\Middleware;
 
 use EasySwoole\Component\Singleton;
 use EasySwoole\Http\Request;
-use EsSwoole\Base\Abstracts\BaseHttpController;
+use EasySwoole\Http\Response;
 use Swoole\Coroutine;
 
 class MiddlewareManager
@@ -47,12 +47,12 @@ class MiddlewareManager
     /**
      * 执行before
      * @param Request $request
-     * @param BaseHttpController $response
+     * @param Response $response
      * @return bool
      * User: dongjw
      * Date: 2021/12/14 15:48
      */
-    public function handelBefore(Request $request,BaseHttpController $response)
+    public function handelBefore(Request $request,Response $response)
     {
         $middlewareIndex = $this->getUriMiddleware($request->getUri()->getPath());
         if (!$middlewareIndex) {
@@ -80,12 +80,12 @@ class MiddlewareManager
     /**
      * 执行after
      * @param Request $request
-     * @param BaseHttpController $response
+     * @param Response $response
      * @return bool
      * User: dongjw
      * Date: 2021/12/14 16:03
      */
-    public function handelAfter(Request $request,BaseHttpController $response)
+    public function handelAfter(Request $request,Response $response)
     {
         $middlewareIndex = $this->currentRequestIndex[Coroutine::getCid()];
         if (!$middlewareIndex) {
