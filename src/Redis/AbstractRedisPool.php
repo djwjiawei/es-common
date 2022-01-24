@@ -25,6 +25,7 @@ use EasySwoole\RedisPool\RedisPool;
  * @method hDel($key, ...$field)
  * @method hExists($key, $field)
  * @method hGet($key, $field)
+ * @method hGetAll($key)
  * @method hSet($key, $field, $value)
  * @method hLen($key)
  * @method hMGet($key, array $hashKeys)
@@ -62,6 +63,8 @@ use EasySwoole\RedisPool\RedisPool;
  * @method zRem($key, $member, ...$members)
  * @method zRemRangeByScore($key, $min, $max)
  * @method zScore($key, $member)
+ * @method zRevRange($key, $start, $stop, $withScores = false)
+ * @method zRevRangeByScore($key, $max, $min, array $options)
  * key
  * @method exists($key)
  * @method del(...$keys)
@@ -69,6 +72,11 @@ use EasySwoole\RedisPool\RedisPool;
  * @method pExpire($key, $expireTime = 60000)
  * @method expireAt($key, $expireTime)
  * @method ttl($key)
+ * lua
+ * @method rawCommand(array $command)
+ * pipe
+ * @method startPipe()
+ * @method execPipe()
  *
  * @see \EasySwoole\Redis\Redis
  */
@@ -138,6 +146,44 @@ abstract class AbstractRedisPool
         },$this->connection,$this->poolTimeout);
     }
 
+    /**
+     * lock指定所有者
+     * @param $key
+     * @param $expire
+     * @return bool|string
+     * User: dongjw
+     * Date: 2022/1/12 19:57
+     */
+    public function ownerLock($key, $expire)
+    {
+        $owner = uniqid();
+        $res = $this->setNx($key, $owner, $expire);
+        if ($res) {
+            return $owner;
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * 只能释放知道所有者的lock
+     * @param $key
+     * @param $owner
+     * @return bool
+     * User: dongjw
+     * Date: 2022/1/12 19:58
+     */
+    public function delOwnerLock($key, $owner)
+    {
+        return (bool) $this->rawCommand([
+            'eval',
+            $this->getReleaseLockLua(),
+            '1',
+            $key,
+            $owner
+        ]);
+    }
+
     protected function getZaddExpireLua()
     {
         return <<<'LUA'
@@ -152,6 +198,17 @@ else
     local val = redis.call('zadd', KEYS[1], ARGV[1], ARGV[2])
     redis.call('expire', KEYS[1], ARGV[3])
     return val
+end
+LUA;
+    }
+
+    protected function getReleaseLockLua()
+    {
+        return <<<'LUA'
+if redis.call("get",KEYS[1]) == ARGV[1] then
+    return redis.call("del",KEYS[1])
+else
+    return 0
 end
 LUA;
     }

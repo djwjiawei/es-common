@@ -103,7 +103,10 @@ abstract class AbstractRequest
         $client->setPath($action);
 
         //beforeRequest可以重置params
-        $params = $this->beforeRequest($params);
+        $beforeParams = $this->beforeRequest($params);
+        if ($beforeParams) {
+            $params = $beforeParams;
+        }
 
         $client->setHeaders($header);
 

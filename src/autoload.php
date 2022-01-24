@@ -23,6 +23,7 @@ if (!function_exists('config')) {
         return Config::getInstance()->getConf($key);
     }
 }
+
 if (!function_exists('configPath')) {
     /**
      * 获取配置文件路径
@@ -50,7 +51,6 @@ if (!function_exists('getCurrentMilliseconds')) {
         return (float) sprintf('%.0f', (floatval($t1) + floatval($t2)) * 1000);
     }
 }
-
 
 if (!function_exists('getStartToEndDate')) {
     /**
@@ -213,4 +213,62 @@ if (!function_exists('retryDuration')) {
             goto beginning;
         }
     }
+}
+
+if (!function_exists('getTraceId')) {
+    /**
+     * 获取traceId,如果request存在则返回request中的traceId否则生成一个新的traceId
+     * @return string
+     * User: dongjw
+     * Date: 2022/1/7 12:11
+     */
+    function getTraceId()
+    {
+        $request = RequestUtil::getRequest();
+        return $request ? $request->getAttribute('traceId') : substr(md5(uniqid()), 8, 16);
+    }
+}
+
+if (!function_exists('strLengthReplace')) {
+    /**
+     * 字符替换
+     * @param $str
+     * @param int $start 从0开始
+     * @param int $length 替换长度
+     * @param string $replace 替换字符
+     * @return string
+     * Date: 2022/1/17 16:51
+     */
+    function strLengthReplace($str, $start, $length, $replace = '*')
+    {
+        return mb_substr($str, 0, $start) . str_repeat($replace, $length) . mb_substr($str, $start + $length);;
+    }
+}
+
+if (!function_exists('strIndexReplace')) {
+    /**
+     * 按索引替换字符
+     * @param $str
+     * @param int $start 从0开始
+     * @param int $index
+     * @param string $replace
+     * @return string
+     * User: dongjw
+     * Date: 2022/1/17 17:15
+     */
+    function strIndexReplace($str, $start, $endIndex, $replace = '*')
+    {
+        $len = mb_strlen($str);
+        if ($endIndex > 0) {
+            $realEndIndex = $endIndex + 1;
+        }else{
+            $realEndIndex = $len + $endIndex;
+        }
+        if ($realEndIndex < $start) {
+            return '';
+        }
+        $repLength = $realEndIndex - $start;
+        return mb_substr($str, 0, $start) . str_repeat($replace, $repLength) . mb_substr($str, $endIndex);
+    }
+
 }

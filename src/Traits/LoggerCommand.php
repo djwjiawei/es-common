@@ -13,12 +13,7 @@ use EasySwoole\EasySwoole\Logger;
 
 trait LoggerCommand
 {
-    protected $traceId;
-
-    public function __construct()
-    {
-        $this->traceId = substr(md5(uniqid()), 8, 16);
-    }
+    protected $logTraceId;
 
     protected function infoLog($msg,$category = 'info')
     {
@@ -32,6 +27,9 @@ trait LoggerCommand
 
     protected function formatLog($msg)
     {
-        return "[{$this->traceId}]" . $msg;
+        if (!$this->logTraceId) {
+            $this->logTraceId = substr(md5(uniqid()), 8, 16);
+        }
+        return "[{$this->logTraceId}]" . $msg;
     }
 }
