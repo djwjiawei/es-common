@@ -4,6 +4,7 @@ namespace EsSwoole\Base\Common;
 
 use EasySwoole\Component\Singleton;
 use EasySwoole\Oss\AliYun;
+use EasySwoole\Oss\AliYun\OssConst;
 use EasySwoole\Utility\File;
 
 /**
@@ -34,14 +35,14 @@ class FileUpload
      */
     public function __construct()
     {
-        $aliyunConfig    = config("esCommon.oss.aliyun");
-        $this->ossBucket = $aliyunConfig['oss_bucket'] ?? '';
-        $this->ossPath   = $aliyunConfig['oss_path'] ?? '';
-        $this->endpoint  = $aliyunConfig['endpoint'] ?? '';
+        $aliYunConfig    = config("esCommon.oss.aliyun");
+        $this->ossBucket = $aliYunConfig['oss_bucket'] ?? '';
+        $this->ossPath   = $aliYunConfig['oss_path'] ?? '';
+        $this->endpoint  = $aliYunConfig['endpoint'] ?? '';
         $clientConfig    = new AliYun\Config([
-            'accessKeyId'     => $aliyunConfig['access_key_id'] ?? '',
-            'accessKeySecret' => $aliyunConfig['access_key_secret'] ?? '',
-            'endpoint'        => $aliyunConfig['endpoint'] ?? '',
+            'accessKeyId'     => $aliYunConfig['access_key_id'] ?? '',
+            'accessKeySecret' => $aliYunConfig['access_key_secret'] ?? '',
+            'endpoint'        => $aliYunConfig['endpoint'] ?? '',
         ]);
         $this->ossClient = new AliYun\OssClient($clientConfig);
     }
@@ -55,7 +56,7 @@ class FileUpload
      */
     public function upload($fileObj): array
     {
-        if (!$fileObj instanceof \EasySwoole\Http\Message\UploadFile) { // 仅支持easyswoole上传文件对象
+        if (!$fileObj instanceof \EasySwoole\Http\Message\UploadFile) { // 仅支持EasySwoole上传文件对象
             return Api::fail('文件有误');
         }
 
@@ -63,18 +64,18 @@ class FileUpload
         $data['getClientFilename']  = $fileObj->getClientFilename();  // 源文件名称
         $data['getClientMediaType'] = $fileObj->getClientMediaType(); // 文件类型
 
-        $localPath = $this->getLocalPath($data['getClientFilename']); // 设置保存文件路径
-        if (!$localPath) {
+        $localFile = $this->getLocalFile($data['getClientFilename']); // 设置保存文件路径
+        if (!$localFile) {
             return Api::fail('upload failed.');
         }
 
         try {
-            $fileObj->moveTo($localPath); // 保存文件
+            $fileObj->moveTo($localFile); // 保存文件
         } catch (\Throwable $throwable) {
             return Api::fail('upload failed.');
         }
 
-        return Api::success(['local_file' => $localPath]);
+        return Api::success(['local_file' => $localFile]);
     }
 
     /**
@@ -84,11 +85,11 @@ class FileUpload
      *
      * @return string|bool
      */
-    private function getLocalPath(string $filename)
+    private function getLocalFile(string $filename)
     {
-        $pathinfo  = pathinfo($filename);
-        $extension = $pathinfo['extension']; // 获取文件后缀
-        $dir       = $this->localPath . '/' . date('Ymd');
+        $pathInfo  = pathinfo($filename);
+        $extension = $pathInfo['extension']; // 获取文件后缀
+        $dir       = $this->localPath . '/' . $this->ossPath . date('Ymd');
         if (!File::createDirectory($dir)) {
             return false;
         }
@@ -137,14 +138,14 @@ class FileUpload
             return Api::fail('upload failed.');
         }
 
-        return Api::success(['file_url' => 'http://' . $this->ossBucket . '.' . $this->endpoint . '/' . $ossObject]);
+        return Api::success(['file_url' => 'https://' . $this->ossBucket . '.' . $this->endpoint . '/' . $ossObject]);
     }
 
     /**
      * 上传base64图片流到本地
      *
-     * @param string $baseInfo //流数据
-     * @param string $filename //文件名
+     * @param string $baseInfo 流数据
+     * @param string $filename 文件名
      *
      * @return array
      */
@@ -163,13 +164,109 @@ class FileUpload
         }
 
         $filename  = explode('.', $filename)[0] . '.' . $extensions;
-        $localPath = $this->getLocalPath($filename);
-        if (false === $localPath) {
+        $localFile = $this->getLocalFile($filename);
+        if (false === $localFile) {
             return Api::fail('upload failed.');
         }
 
-        file_put_contents($localPath, $data); //写入文件并保存
+        file_put_contents($localFile, $data); //写入文件并保存
 
-        return Api::success(['local_file' => $localPath]);
+        return Api::success(['local_file' => $localFile]);
+    }
+
+    /**
+     * OSS文件下载
+     *
+     * @param string $fileUrl     oss文件url
+     * @param bool   $onlyContent 只返回文件内容
+     *
+     * @return array
+     */
+    public function ossDownload(string $fileUrl, bool $onlyContent = false): array
+    {
+        try {
+            $ossObject    = $this->getOssObjectByUrl($fileUrl);
+            $downloadFile = $this->localPath . '/' . $ossObject;
+            if (is_file($downloadFile)) { // 优先使用本地文件
+                if ($onlyContent) {
+                    $res['file_content'] = file_get_contents($downloadFile);
+                } else {
+                    $res['local_file'] = $downloadFile;
+                }
+
+                return Api::success($res);
+            }
+
+            $options = [];
+            if (!$onlyContent) { // 初始化下载文件配置及目录
+                $options  = array(
+                    OSSConst::OSS_FILE_DOWNLOAD => $downloadFile,
+                );
+                $localDir = pathinfo($downloadFile)['dirname'] ?? '';
+                if (!File::createDirectory($localDir)) {
+                    return Api::fail('download failed.');
+                }
+            }
+
+            $content = $this->ossClient->getObject($this->ossBucket, $ossObject, $options);
+            if ($onlyContent) {
+                $res['file_content'] = $content;
+            } else {
+                $res['local_file'] = $downloadFile;
+            }
+
+            return Api::success($res);
+        } catch (\Throwable $throwable) {
+            return Api::fail('download failed.');
+        }
+    }
+
+    /**
+     * OSS文件删除
+     *
+     * @param string $fileUrl
+     *
+     * @return array
+     */
+    public function ossDelete(string $fileUrl): array
+    {
+        try {
+            $ossObject = $this->getOssObjectByUrl($fileUrl);
+            $this->ossClient->deleteObject($this->ossBucket, $ossObject);
+
+            return Api::success();
+        } catch (\Throwable $throwable) {
+            return Api::fail('delete failed.');
+        }
+    }
+
+    /**
+     * 通过url获取OSS对象
+     *
+     * @param string $fileUrl
+     *
+     * @return string
+     *
+     * @throws \Exception
+     */
+    private function getOssObjectByUrl(string $fileUrl): string
+    {
+        $urlParse  = parse_url($fileUrl); // 解析url
+        $ossObject = !empty($urlParse['path']) ? trim($urlParse['path'], '/') : '';
+        if (empty($ossObject)) {
+            throw new \Exception('url error');
+        }
+
+        return $ossObject;
+    }
+
+    /**
+     * 获取本地上传目录
+     *
+     * @return string
+     */
+    public function getLocalPath(): string
+    {
+        return $this->localPath;
     }
 }
