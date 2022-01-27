@@ -12,8 +12,6 @@ namespace EsSwoole\Base\Abstracts;
 use EasySwoole\Component\Di;
 use EasySwoole\EasySwoole\SysConst;
 use EsSwoole\Base\Middleware\MiddlewareManager;
-use EsSwoole\Base\Util\AppUtil;
-use EsSwoole\Base\Log\HttpClientLog;
 use EasySwoole\Http\AbstractInterface\Controller;
 use EsSwoole\Base\Common\Api;
 use EsSwoole\Base\Util\ValidateUtil;
