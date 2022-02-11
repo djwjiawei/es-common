@@ -18,6 +18,7 @@
         "easyswoole/redis-pool": "^2.2",
         "easyswoole/smtp": "^2.0",
         "easyswoole/http-client": "^1.5",
+        "easyswoole/oss": "1.1.*",
         "monolog/monolog": "^2.3"
     },
     "extra": {
