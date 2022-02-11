@@ -13,62 +13,64 @@ use EsSwoole\Base\Exception\LogicAssertException;
 
 class Assert
 {
-    static function assertEquals($expected, $actual, string $message, $contrastType = false, $ignoreCase = false)
+    public static function assertEquals($expected, $actual, string $message, $contrastType = false, $errCode = 0)
     {
-        $result = self::equals($expected, $actual, $contrastType, $ignoreCase);
-        self::throwException($result, $message);
+        $result = self::equals($expected, $actual, $contrastType);
+        self::throwException($result, $message, $errCode);
     }
 
-    static function assertNotEquals($expected, $actual, string $message  , $contrastType = false, $ignoreCase = false)
+    public static function assertNotEquals($expected, $actual, string $message  , $contrastType = false, $errCode = 0)
     {
-        $result = self::equals($expected, $actual, $contrastType, $ignoreCase);
-        self::throwException(!$result, $message);
+        $result = self::equals($expected, $actual, $contrastType);
+        self::throwException(!$result, $message, $errCode);
     }
 
-    static function assertTrue($condition, string $message)
+    public static function assertSuccessCode($code, string $message, $errCode = 0)
     {
-        self::throwException($condition===true, $message);
+        $result = self::equals($code, config('statusCode.success'), true);
+        self::throwException(!$result, $message, $errCode);
     }
 
-    static function assertFalse($condition, string $message)
+    public static function assertTrue($condition, string $message, $errCode = 0)
     {
-        self::throwException($condition===false, $message);
+        self::throwException($condition === true, $message, $errCode);
     }
 
-    static function assertGreaterThan($expected, $actual, string $message){
-        $result = $actual>$expected;
-        self::throwException($result, $message);
+    public static function assertFalse($condition, string $message, $errCode = 0)
+    {
+        self::throwException($condition === false, $message, $errCode);
     }
 
-    static function assertLessThan($expected, $actual, string $message){
-        $result = $actual<$expected;
-        self::throwException($result, $message);
+    public static function assertGreaterThan($expected, $actual, string $message, $errCode = 0){
+        self::throwException($actual > $expected, $message, $errCode);
     }
 
-    static function assertEmpty($expected,  string $message){
-        self::throwException(empty($expected), $message);
+    public static function assertLessThan($expected, $actual, string $message, $errCode = 0){
+        self::throwException($actual < $expected, $message, $errCode);
     }
 
-    static function assertNotEmpty($expected,  string $message){
-        self::throwException(!empty($expected), $message);
+    public static function assertEmpty($expected,  string $message, $errCode = 0){
+        self::throwException(empty($expected), $message, $errCode);
     }
 
-    static function equals($expected, $actual, $contrastType = false, $ignoreCase = false)
+    public static function assertNotEmpty($expected,  string $message, $errCode = 0){
+        self::throwException(!empty($expected), $message, $errCode);
+    }
+
+    protected static function equals($expected, $actual, $contrastType = false)
     {
         if ($contrastType === true) {
             return $expected === $actual;
         }
-        if ($ignoreCase === true) {
-            return strcmp($expected, $actual);
-        }
+
         return $expected == $actual;
     }
 
 
-    static function throwException($bool, $message)
+    protected static function throwException($bool, $message, $errCode = 0)
     {
         if ($bool === false) {
-            throw new LogicAssertException($message);
+            throw new LogicAssertException($message, $errCode);
         }
     }
 }

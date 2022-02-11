@@ -11,7 +11,6 @@ namespace EsSwoole\Base\Exception;
 
 use EsSwoole\Base\Common\Mail;
 use EsSwoole\Base\Util\AppUtil;
-use EsSwoole\Base\Log\HttpClientLog;
 use EsSwoole\Base\Redis\ExceptionRedis;
 use EasySwoole\Component\Di;
 use EasySwoole\EasySwoole\SysConst;
@@ -35,33 +34,41 @@ class ExceptionHandler
 
         //设置set_exception_handler
         Di::getInstance()->set(SysConst::HTTP_EXCEPTION_HANDLER, function ($throwable, $request, $response) {
-            //设置响应头：500
-            $response->withStatus(Status::CODE_INTERNAL_SERVER_ERROR);
+            $msg = '';
+            $data = [];
 
-            $result = ['code' => config('statusCode.fail'),'msg' => $throwable->getMessage(),'data' => []];
-            //如果是生产环境，不显示详细错误
+           //如果是生产环境，不显示详细错误
             if(AppUtil::isProd()){
                 if (!($throwable instanceof ApiException)) {
-                    $result['msg'] = '系统异常';
+                    $msg = '系统异常';
                 }
             }else{
                 //测试环境返回trace信息
-                $result['trace'] = $throwable->getTraceAsString();
+                $data['trace'] = $throwable->getTraceAsString();
             }
-            $result['traceId'] = $request->getAttribute('traceId') ?: '';
+            $data['traceId'] = $request->getAttribute('traceId') ?: '';
 
             //error的已经在set_error_handler中记录了，这里只记录exception的
             if (!($throwable instanceof ErrorException)) {
                 Trigger::getInstance()->throwable($throwable);
             }
 
+            //设置响应头：500
+            $response->withStatus(Status::CODE_INTERNAL_SERVER_ERROR);
+
+            //输出异常返回
+            RequestUtil::outJson(
+                $response,
+                LogicAssertException::getErrCode(LogicAssertException::NO_CATCH_CODE),
+                $msg,
+                [],
+                $data
+            );
+
             //发送邮件
             go(function () use($throwable) {
                 ExceptionHandler::report($throwable);
             });
-
-            $response->write(json_encode($result,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-            $response->withHeader('Content-type', 'application/json;charset=utf-8');
         });
 
         //设置set_error_handler

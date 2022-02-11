@@ -11,11 +11,12 @@ namespace EsSwoole\Base\Middleware;
 
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
+use EsSwoole\Base\Abstracts\AbstractMiddleware;
 use EsSwoole\Base\Log\HttpClientLog;
 use EsSwoole\Base\Util\AppUtil;
 use EsSwoole\Base\Util\RequestUtil;
 
-class RequestMiddleware implements MiddlewareInterface
+class RequestMiddleware extends AbstractMiddleware
 {
     public function before(Request $request, Response $response): bool
     {

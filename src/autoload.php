@@ -134,7 +134,11 @@ if (!function_exists('isWorkerProcess')) {
      */
     function isWorkerProcess()
     {
-        return \EasySwoole\EasySwoole\ServerManager::getInstance()->getSwooleServer()->worker_id >= 0;
+        if (!empty(\EasySwoole\EasySwoole\ServerManager::getInstance()->getSwooleServer())) {
+            return \EasySwoole\EasySwoole\ServerManager::getInstance()->getSwooleServer()->worker_id >= 0;
+        }else{
+            return false;
+        }
     }
 }
 

@@ -14,10 +14,11 @@
         }
     ],
     "require": {
-        "easyswoole/easyswoole": "3.4.x",
+        "easyswoole/easyswoole": "3.5.x",
         "easyswoole/redis-pool": "^2.2",
         "easyswoole/smtp": "^2.0",
-        "easyswoole/http-client": "^1.5"
+        "easyswoole/http-client": "^1.5",
+        "monolog/monolog": "^2.3"
     },
     "extra": {
         "es-swoole": {

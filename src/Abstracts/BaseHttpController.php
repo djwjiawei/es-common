@@ -11,14 +11,22 @@ namespace EsSwoole\Base\Abstracts;
 
 use EasySwoole\Component\Di;
 use EasySwoole\EasySwoole\SysConst;
+use EsSwoole\Base\Exception\LogicAssertException;
 use EsSwoole\Base\Middleware\MiddlewareManager;
 use EasySwoole\Http\AbstractInterface\Controller;
-use EsSwoole\Base\Common\Api;
+use EsSwoole\Base\Util\RequestUtil;
 use EsSwoole\Base\Util\ValidateUtil;
 
 abstract Class BaseHttpController extends Controller
 {
 
+    /**
+     * action执行前 执行的方法
+     * @param string|null $action
+     * @return bool|null
+     * User: dongjw
+     * Date: 2022/1/28 16:52
+     */
     protected function onRequest(?string $action): ?bool
     {
         //执行中间件
@@ -29,65 +37,145 @@ abstract Class BaseHttpController extends Controller
         return true;
     }
 
+    /**
+     * action执行完后 执行的方法
+     * @param string|null $actionName
+     * User: dongjw
+     * Date: 2022/1/28 16:51
+     */
     protected function afterAction(?string $actionName): void
     {
         MiddlewareManager::getInstance()->handelAfter($this->request(),$this->response());
     }
 
-    public function outJson($code = 0,$msg = '',$data = [])
+    /**
+     * 输出一个json数据
+     * @param int $code
+     * @param string $msg
+     * @param array $data
+     * @return bool
+     * User: dongjw
+     * Date: 2022/1/28 16:51
+     */
+    public function outJson($code = 0, $msg = '', $data = [])
     {
-        if (!$this->response()->isEndResponse()) {
-            $this->response()->write(json_encode([
-                "code" => $code,
-                "msg" => $msg,
-                "data" => $data
-            ],JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-            $this->response()->withHeader('Content-type', 'application/json;charset=utf-8');
-            return true;
-        } else {
-            return false;
-        }
+        return RequestUtil::outJson($this->response(), $code, $msg, $data);
     }
 
-    public function success($data = [],$msg = '',$code = 0)
+    /**
+     * 输出api数据
+     * @param array $apiData ['code' => 0, 'msg' => '', 'data' => []]
+     * @return bool
+     * User: dongjw
+     * Date: 2022/1/28 16:50
+     */
+    public function outApi($apiData)
     {
-        return $this->outJson($code, $msg, $data);
+        return RequestUtil::outJson($this->response(), $apiData['code'], $apiData['msg'], $apiData['data']);
     }
 
-    public function fail($msg = '',$data = [],$code = -1)
+    /**
+     * 输出success数据
+     * @param array $data
+     * @param string $msg
+     * @return bool
+     * User: dongjw
+     * Date: 2022/1/28 16:49
+     */
+    public function success($data = [], $msg = '')
     {
-        return $this->outJson($code, $msg, $data);
+        return RequestUtil::outJson($this->response(), config('statusCode.success'), $msg, $data);
     }
 
+    /**
+     * 输出fail数据,code为LogicAssertException默认错误码
+     * @param string $msg
+     * @param array $data
+     * @return bool
+     * User: dongjw
+     * Date: 2022/1/28 16:49
+     */
+    public function fail($msg = '', $data = [])
+    {
+        return RequestUtil::outJson($this->response(), LogicAssertException::getErrCode(), $msg, $data);
+    }
+
+    /**
+     * 校验get参数
+     * @param $rules
+     * @return mixed
+     * @throws LogicAssertException
+     * User: dongjw
+     * Date: 2022/1/28 16:48
+     */
     public function validateGet($rules)
     {
         return $this->validateData($rules,$this->request()->getQueryParams());
     }
 
+    /**
+     * 校验post form参数
+     * @param $rules
+     * @return mixed
+     * @throws LogicAssertException
+     * User: dongjw
+     * Date: 2022/1/28 16:48
+     */
     public function validateForm($rules)
     {
         return $this->validateData($rules,$this->request()->getParsedBody());
     }
 
+    /**
+     * 校验json参数
+     * @param $rules
+     * @return mixed
+     * @throws LogicAssertException
+     * User: dongjw
+     * Date: 2022/1/28 16:48
+     */
     public function validateJson($rules)
     {
         return $this->validateData($rules,$this->getJsonData());
     }
 
+    /**
+     * 校验所有请求参数
+     * @param $rules
+     * @return mixed
+     * @throws LogicAssertException
+     * User: dongjw
+     * Date: 2022/1/28 16:48
+     */
     public function validate($rules)
     {
         //将get query和post body与raw数据合并进行校验
         return $this->validateData($rules,$this->getAllInput());
     }
 
+    /**
+     * 校验参数(校验成功后返回校验的参数,失败直接抛出异常)
+     * @param $rules
+     * @param $params
+     * @return mixed
+     * @throws LogicAssertException
+     * User: dongjw
+     * Date: 2022/1/28 16:47
+     */
     public function validateData($rules,$params)
     {
         if (!$params) {
-            return Api::arr(config('statusCode.param'),'请求参数为空');
+            throw new LogicAssertException('请求参数为空');
         }
         return ValidateUtil::validate($rules,$params);
     }
 
+    /**
+     * 获取请求中的json数据
+     * @return array|mixed
+     * User: dongjw
+     * Date: 2022/1/28 16:47
+     */
     public function getJsonData()
     {
         $raw = $this->request()->getBody()->__toString();
@@ -97,6 +185,12 @@ abstract Class BaseHttpController extends Controller
         return [];
     }
 
+    /**
+     * 获取request中的所有请求参数
+     * @return array
+     * User: dongjw
+     * Date: 2022/1/28 16:47
+     */
     public function getAllInput()
     {
         return array_merge($this->request()->getRequestParam() ?: [],$this->getJsonData());
@@ -116,13 +210,17 @@ abstract Class BaseHttpController extends Controller
     /**
      * 重写异常捕获,以便中间件可以拿到异常时的响应
      * @param \Throwable $throwable
-     * @throws \Throwable
      * User: dongjw
      * Date: 2021/12/15 12:49
      */
     protected function onException(\Throwable $throwable): void
     {
-        call_user_func(Di::getInstance()->get(SysConst::HTTP_EXCEPTION_HANDLER),$throwable,$this->request(),$this->response());
+        if ($throwable instanceof LogicAssertException) {
+            //如果是logic异常,直接输出
+            $this->outJson($throwable->getCode(), $throwable->getMessage());
+        }else{
+            call_user_func(Di::getInstance()->get(SysConst::HTTP_EXCEPTION_HANDLER),$throwable,$this->request(),$this->response());
+        }
     }
 
 }

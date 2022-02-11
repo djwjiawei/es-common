@@ -6,6 +6,7 @@
  * Time: 15:23
  */
 return [
+    'swooleHook' => SWOOLE_HOOK_ALL | SWOOLE_HOOK_CURL,
     'exception' => [
         //过期时间
         'mailTimeout' => 300,
@@ -23,6 +24,9 @@ return [
             'from' => '{}服务',
             'timeout' => '' //默认5s
         ]
+    ],
+    'log' => [
+        'mode' => \EsSwoole\Base\Log\Logger::TASK_MODE
     ],
     'provider' => [
         \EsSwoole\Base\Provider\EsProvider::class

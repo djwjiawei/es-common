@@ -9,13 +9,17 @@
 namespace EsSwoole\Base\Log;
 
 
+use EasySwoole\Component\Singleton;
 use EasySwoole\Log\LoggerInterface;
-use EasySwoole\Utility\File;
 use DateTime;
 use EsSwoole\Base\Util\RequestUtil;
 
 class Logger implements LoggerInterface
 {
+    use Singleton;
+
+    const TASK_MODE = 1;
+
     /**
      * http请求日志标签
      */
@@ -26,9 +30,17 @@ class Logger implements LoggerInterface
      */
     const TRIGGER = 'trigger';
 
+    /**
+     * 日志根目录
+     */
     private $logDir;
 
-    function __construct(string $logDir = null)
+    /**
+     * @var array \Monolog\Logger
+     */
+    protected $logHandler = [];
+
+    public function __construct(string $logDir = null)
     {
         if(empty($logDir)){
             $logDir = EASYSWOOLE_LOG_DIR;
@@ -44,15 +56,53 @@ class Logger implements LoggerInterface
      * User: dongjw
      * Date: 2021/11/19 14:42
      */
-    function log(?string $msg,int $logLevel = self::LOG_LEVEL_DEBUG,string $category = 'info')
+    public function log(?string $msg,int $logLevel = self::LOG_LEVEL_DEBUG,string $category = 'info')
     {
-        $subDir = $this->logDir . '/' . date('Y-m-d');
-        if (!is_dir($subDir)) {
-            File::createDirectory($subDir);
-        }
-        $filePath = $subDir . '/' . $category . '_' . date('H') . '.log';
+        $levelMap = $this->levelMap($logLevel);
+        $format = $this->getFormat($msg, $levelMap, $category);
 
-        file_put_contents($filePath,$this->getFormat($msg,$logLevel,$category),FILE_APPEND|LOCK_EX);
+        go(function () use($format, $levelMap, $category){
+            try {
+                $this->logWrite($format, $levelMap, $category);
+            } catch (\Throwable $e) {
+                $this->console('log异常 msg:' . $e->getMessage(), self::LOG_LEVEL_WARNING);
+            }
+        });
+
+        //下边为投递到task中执行 但实际压测效果直接开启协程处理效果更优
+//        if (isWorkerProcess() && config('esCommon.log.mode') == self::TASK_MODE) {
+//            goTry(function () use($category, $levelMap, $format){
+//                $taskRes = TaskManager::getInstance()->async(new LogTask($msg, $levelMap, $category));
+//
+//                //投递异常 转为协程记录
+//                if ($taskRes < 0) {
+//                    $this->console('log投递异常 code:' . $taskRes, self::LOG_LEVEL_WARNING);
+////                    goto goLog;
+//                    $this->logWrite($category, $levelMap, $format);
+//                }
+//            });
+//        }else{
+//            goLog:
+//            goTry(function () use($category, $levelMap, $format){
+//                $this->logWrite($category, $levelMap, $format);
+//            });
+//        }
+    }
+
+    public function logWrite($format, $levelMap, $category)
+    {
+        if (!isset($this->logHandler[$category])) {
+            $this->logHandler[$category] = new \Monolog\Logger('log');
+            $this->logHandler[$category]->pushHandler(new FileHourHandler(
+                    $this->logDir, $category . '.log')
+            );
+        }
+
+        if (method_exists($this->logHandler[$category], $levelMap)) {
+            $this->logHandler[$category]->$levelMap($format);
+        }else{
+            $this->logHandler[$category]->info($format);
+        }
     }
 
     /**
@@ -65,7 +115,7 @@ class Logger implements LoggerInterface
      */
     function console(?string $msg,int $logLevel = self::LOG_LEVEL_DEBUG,string $category = 'info')
     {
-        echo $this->getFormat($msg,$logLevel,$category,true);
+        echo $this->getFormat($msg, $this->levelMap($logLevel), $category,true) . PHP_EOL;
     }
 
     /**
@@ -78,26 +128,21 @@ class Logger implements LoggerInterface
      * User: dongjw
      * Date: 2021/11/19 14:42
      */
-    private function getFormat($msg,$logLevel,$category,$isConsole = false)
+    private function getFormat($msg, $logLevel, $category, $isConsole = false)
     {
-        $date = (new DateTime())->format('Y-m-d\TH:i:s.uP');
-        $levelStr = $this->levelMap($logLevel);
+        $str = '';
 
-        //日期
-        $str = "[{$date}]";
         //如果是console加上分类信息，文件会以分类为名则不用加
         if ($isConsole) {
-            $str .= "[{$category}]";
+            $date = (new DateTime())->format('Y-m-d\TH:i:s.uP');
+            $str .= "[{$date}] [{$category}][{$logLevel}] ";
         }
-        //加log级别信息
-        $str .= "[{$levelStr}]";
+
         //加traceid
         if (RequestUtil::getRequest()) {
             $traceId = RequestUtil::getRequest()->getAttribute('traceId');
-            $str .= "[{$traceId}]";
+            $str .= "[{$traceId}] ";
         }
-
-        $str .= " : ";
 
         //如果不是httpclient或trigger，则再获取打印日志的代码位置信息
         if (!in_array($category,[self::HTTP_REQUEST,self::TRIGGER])) {
@@ -125,7 +170,7 @@ class Logger implements LoggerInterface
         }
 
         //添加主体消息
-        $str .= "{$msg}" . PHP_EOL;
+        $str .= $msg;
         return $str;
     }
 

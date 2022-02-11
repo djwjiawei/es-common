@@ -10,6 +10,7 @@ namespace EsSwoole\Base\Util;
 
 
 use EasySwoole\Http\Request;
+use EasySwoole\Http\Response;
 use Swoole\Coroutine;
 
 class RequestUtil
@@ -76,6 +77,12 @@ class RequestUtil
         return false;
     }
 
+    /**
+     * 获取请求中的json数据
+     * @return array|mixed
+     * User: dongjw
+     * Date: 2022/1/28 17:39
+     */
     public static function getJsonData()
     {
         $request = self::getRequest();
@@ -89,6 +96,14 @@ class RequestUtil
         return [];
     }
 
+    /**
+     * 获取请求中的全部入参
+     * @param string $key
+     * @param null $default
+     * @return array|mixed|null
+     * User: dongjw
+     * Date: 2022/1/28 17:39
+     */
     public static function getAllInput($key = '',$default = null)
     {
         $request = self::getRequest();
@@ -105,5 +120,35 @@ class RequestUtil
             return $data[$key] ?? $default;
         }
         return $data;
+    }
+
+    /**
+     * 按返回格式 统一返回json
+     * @param Response $response
+     * @param $code
+     * @param $msg
+     * @param $data
+     * @param array $extraData
+     * @return bool
+     * User: dongjw
+     * Date: 2022/1/28 17:38
+     */
+    public static function outJson(Response $response, $code, $msg, $data, $extraData = [])
+    {
+        if (!$response->isEndResponse()) {
+            $return = [
+                "retcode" => $code,
+                "errmsg" => $msg,
+                "content" => $data
+            ];
+            if ($extraData) {
+                $return = array_merge($return, $extraData);
+            }
+            $response->write(json_encode($return,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            $response->withHeader('Content-type', 'application/json;charset=utf-8');
+            return true;
+        } else {
+            return false;
+        }
     }
 }
