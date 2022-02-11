@@ -157,7 +157,7 @@ class MiddlewareManager
     {
         //正则中间件
         $regularMiddleware = [];
-        if ($this->uriRegularMiddlewareIndex[$uri]) {
+        if (isset($this->uriRegularMiddlewareIndex[$uri])) {
             $regularMiddleware = $this->uriRegularMiddlewareIndex[$uri];
         }else{
             if ($this->middlewareRule[self::REGULAR_TYPE]) {

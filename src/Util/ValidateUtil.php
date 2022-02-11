@@ -11,6 +11,7 @@ namespace EsSwoole\Base\Util;
 
 use EasySwoole\Validate\Validate;
 use EsSwoole\Base\Common\Api;
+use EsSwoole\Base\Exception\LogicAssertException;
 
 class ValidateUtil
 {
@@ -19,8 +20,8 @@ class ValidateUtil
         $validate = Validate::make($rules);
         $res = $validate->validate($params);
         if(!$res){
-            return Api::arr(config('statusCode.param'),$validate->getError()->__toString());
+            throw new LogicAssertException($validate->getError()->__toString());
         }
-        return Api::arr(config('statusCode.success'),'',$params);
+        return $params;
     }
 }

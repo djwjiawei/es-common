@@ -44,9 +44,22 @@ class ConfigLoad
                 $beforePrefix = str_replace(DIRECTORY_SEPARATOR, '.', $replaceDir) . '.';
             }
             //加载配置
-            Config::getInstance()->setConf($beforePrefix . $pathinfo['filename'],require $file);
+            Config::getInstance()->setConf($beforePrefix . $pathinfo['filename'], require $file);
         }
         return true;
+    }
+
+    /**
+     * 加载一个文件的配置
+     * @param $key
+     * @param $file
+     * User: dongjw
+     * Date: 2022/1/28 17:55
+     */
+    public static function loadFile($key, $file)
+    {
+        //加载配置
+        Config::getInstance()->setConf($key, require $file);
     }
 
 }

@@ -38,4 +38,13 @@ class Api
             'data' => $data
         ];
     }
+
+    public static function exception(\Throwable $e)
+    {
+        return [
+            'code' => $e->getCode(),
+            'msg' => $e->getMessage(),
+            'data' => []
+        ];
+    }
 }

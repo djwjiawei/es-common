@@ -28,6 +28,11 @@ class ServiceProvider
         //加载config目录的配置
         ConfigLoad::loadDir(configPath(),configPath(),'php');
 
+        //协程hook处理
+        if (config('esCommon.swooleHook')) {
+            \Co::set(['hook_flags' => config('esCommon.swooleHook')]);
+        }
+
         //发现的服务提供者
         $providerArr = array_values(Composer::getInstance()->getProvider());
 

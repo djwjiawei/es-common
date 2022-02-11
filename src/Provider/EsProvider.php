@@ -11,7 +11,6 @@ namespace EsSwoole\Base\Provider;
 use EasySwoole\EasySwoole\ServerManager;
 use EasySwoole\Task\AbstractInterface\TaskInterface;
 use EsSwoole\Base\Abstracts\ProcessMessageInterface;
-use EsSwoole\Base\Common\ConfigLoad;
 use EsSwoole\Base\Common\Prometheus;
 use EsSwoole\Base\Log\Logger;
 use EasySwoole\Component\Di;
@@ -62,10 +61,10 @@ class EsProvider extends AbstractProvider
                 } catch (\Throwable $throwable) {
                     $task->onException($throwable, 0, $serv->worker_id);
                 }
-            } else if ($task instanceof ProcessMessageInterface) {
-                try {
+            }else if ($task instanceof ProcessMessageInterface) {
+                try{
                     $task->run();
-                } catch (\Throwable $throwable) {
+                }catch (\Throwable $throwable){
                     $task->onException($throwable);
                 }
             }
