@@ -11,10 +11,9 @@ namespace EsSwoole\Base\Provider;
 use EasySwoole\EasySwoole\ServerManager;
 use EasySwoole\Task\AbstractInterface\TaskInterface;
 use EsSwoole\Base\Abstracts\ProcessMessageInterface;
+use EsSwoole\Base\Common\ConfigLoad;
 use EsSwoole\Base\Common\Prometheus;
-use EsSwoole\Base\Log\Logger;
 use EasySwoole\Component\Di;
-use EasySwoole\EasySwoole\SysConst;
 use EsSwoole\Base\Abstracts\AbstractProvider;
 use EsSwoole\Base\Exception\ExceptionHandler;
 use EsSwoole\Base\Middleware\MiddlewareManager;
@@ -23,13 +22,10 @@ class EsProvider extends AbstractProvider
 {
     public function register()
     {
+        ConfigLoad::loadDir(configPath(),configPath(),'php');
+
         //合并该包配置
         $this->mergeConfig(__DIR__ . '/../config/statusCode.php', 'statusCode');
-
-        //设置日志handler
-        $logger = new Logger();
-        Di::getInstance()->set(SysConst::LOGGER_HANDLER, $logger);
-        \EasySwoole\EasySwoole\Logger::getInstance($logger);
 
         //注入Prometheus实例
         $prometheus = new Prometheus();
@@ -37,12 +33,6 @@ class EsProvider extends AbstractProvider
 
         //注册异常
         ExceptionHandler::injectException();
-
-        //替换框架内的AbstractProcess,用来分发进程启动事件
-        file_put_contents(
-            EASYSWOOLE_ROOT . '/vendor/easyswoole/component/src/Process/AbstractProcess.php',
-            file_get_contents(__DIR__ . '/../Abstracts/AbstractReplaceProcess.php')
-        );
 
         //中间件初始化
         MiddlewareManager::getInstance();
