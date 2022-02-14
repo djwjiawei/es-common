@@ -23,22 +23,22 @@ abstract class AbstractProcess
     /** @var Config */
     private $config;
 
-
     /**
      * name  args  false 2 true
      * AbstractProcess constructor.
+     *
      * @param string $processName
-     * @param null $arg
-     * @param bool $redirectStdinStdout
-     * @param int $pipeType
-     * @param bool $enableCoroutine
+     * @param null   $arg
+     * @param bool   $redirectStdinStdout
+     * @param int    $pipeType
+     * @param bool   $enableCoroutine
      */
     function __construct(...$args)
     {
         $arg1 = array_shift($args);
-        if($arg1 instanceof Config){
+        if ($arg1 instanceof Config) {
             $this->config = $arg1;
-        }else{
+        } else {
             $this->config = new Config();
             $this->config->setProcessName($arg1);
             $arg = array_shift($args);
@@ -51,40 +51,43 @@ abstract class AbstractProcess
             $enableCoroutine = (bool)array_shift($args) ?: false;
             $this->config->setEnableCoroutine($enableCoroutine);
         }
-        $this->swooleProcess = new Process([$this,'__start'],$this->config->isRedirectStdinStdout(),$this->config->getPipeType(),$this->config->isEnableCoroutine());
-        Manager::getInstance()->addProcess($this,false);
+        $this->swooleProcess = new Process(
+            [$this, '__start'], $this->config->isRedirectStdinStdout(), $this->config->getPipeType(),
+            $this->config->isEnableCoroutine()
+        );
+        Manager::getInstance()->addProcess($this, false);
     }
 
-    public function getProcess():Process
+    public function getProcess(): Process
     {
         return $this->swooleProcess;
     }
 
-    public function addTick($ms,callable $call):?int
+    public function addTick($ms, callable $call): ?int
     {
         return Timer::getInstance()->loop(
-            $ms,$call
+            $ms, $call
         );
     }
 
-    public function clearTick(int $timerId):?int
+    public function clearTick(int $timerId): ?int
     {
         return Timer::getInstance()->clear($timerId);
     }
 
-    public function delay($ms,callable $call):?int
+    public function delay($ms, callable $call): ?int
     {
-        return Timer::getInstance()->after($ms,$call);
+        return Timer::getInstance()->after($ms, $call);
     }
 
     /*
      * 服务启动后才能获得到pid
      */
-    public function getPid():?int
+    public function getPid(): ?int
     {
-        if(isset($this->swooleProcess->pid)){
+        if (isset($this->swooleProcess->pid)) {
             return $this->swooleProcess->pid;
-        }else{
+        } else {
             return null;
         }
     }
@@ -93,67 +96,84 @@ abstract class AbstractProcess
     {
         BaseEvent::getInstance()->hook(BaseEvent::USER_PROCESS_START_EVENT);
         $table = Manager::getInstance()->getProcessTable();
-        $table->set($process->pid,[
-            'pid'=>$process->pid,
-            'name'=>$this->config->getProcessName(),
-            'group'=>$this->config->getProcessGroup(),
-            'startUpTime'=>time(),
-            "hash"=>spl_object_hash($this->getProcess())
-        ]);
-        \Swoole\Timer::tick(1*1000,function ()use($table,$process){
-            $table->set($process->pid,[
-                'memoryUsage'=>memory_get_usage(),
-                'memoryPeakUsage'=>memory_get_peak_usage(true)
-            ]);
-        });
-        if(!in_array(PHP_OS,['Darwin','CYGWIN','WINNT']) && !empty($this->getProcessName())){
+        $table->set(
+            $process->pid, [
+            'pid'         => $process->pid,
+            'name'        => $this->config->getProcessName(),
+            'group'       => $this->config->getProcessGroup(),
+            'startUpTime' => time(),
+            "hash"        => spl_object_hash($this->getProcess()),
+        ]
+        );
+        \Swoole\Timer::tick(
+            1 * 1000, function () use ($table, $process) {
+            $table->set(
+                $process->pid, [
+                'memoryUsage'     => memory_get_usage(),
+                'memoryPeakUsage' => memory_get_peak_usage(true),
+            ]
+            );
+        }
+        );
+        if (!in_array(PHP_OS, ['Darwin', 'CYGWIN', 'WINNT']) && !empty($this->getProcessName())) {
             $process->name($this->getProcessName());
         }
-        swoole_event_add($this->swooleProcess->pipe, function(){
-            try{
+        swoole_event_add(
+            $this->swooleProcess->pipe, function () {
+            try {
                 $this->onPipeReadable($this->swooleProcess);
-            }catch (\Throwable $throwable){
+            } catch (\Throwable $throwable) {
                 $this->onException($throwable);
             }
-        });
-        Process::signal(SIGTERM,function ()use($process){
+        }
+        );
+        Process::signal(
+            SIGTERM, function () use ($process) {
             swoole_event_del($process->pipe);
-            try{
+            try {
                 $this->onSigTerm();
-            }catch (\Throwable $throwable){
+            } catch (\Throwable $throwable) {
                 $this->onException($throwable);
-            } finally {
+            }
+            finally {
                 \Swoole\Timer::clearAll();
                 Process::signal(SIGTERM, null);
                 Event::exit();
             }
-        });
-        register_shutdown_function(function ()use($table,$process) {
-            if($table){
-                $table->del($process->pid);
-            }
-            $schedule = new Scheduler();
-            $schedule->add(function (){
-                $channel = new Coroutine\Channel(1);
-                Coroutine::create(function ()use($channel){
-                    try{
-                        $this->onShutDown();
-                    }catch (\Throwable $throwable){
-                        $this->onException($throwable);
+        }
+        );
+        register_shutdown_function(
+            function () use ($table, $process) {
+                if ($table) {
+                    $table->del($process->pid);
+                }
+                $schedule = new Scheduler();
+                $schedule->add(
+                    function () {
+                        $channel = new Coroutine\Channel(1);
+                        Coroutine::create(
+                            function () use ($channel) {
+                                try {
+                                    $this->onShutDown();
+                                } catch (\Throwable $throwable) {
+                                    $this->onException($throwable);
+                                }
+                                $channel->push(1);
+                            }
+                        );
+                        $channel->pop($this->config->getMaxExitWaitTime());
+                        \Swoole\Timer::clearAll();
+                        Event::exit();
                     }
-                    $channel->push(1);
-                });
-                $channel->pop($this->config->getMaxExitWaitTime());
+                );
+                $schedule->start();
                 \Swoole\Timer::clearAll();
                 Event::exit();
-            });
-            $schedule->start();
-            \Swoole\Timer::clearAll();
-            Event::exit();
-        });
-        try{
+            }
+        );
+        try {
             $this->run($this->config->getArg());
-        }catch (\Throwable $throwable){
+        } catch (\Throwable $throwable) {
             $this->onException($throwable);
         }
         Event::wait();
@@ -169,12 +189,13 @@ abstract class AbstractProcess
         return $this->config->getProcessName();
     }
 
-    public function getConfig():Config
+    public function getConfig(): Config
     {
         return $this->config;
     }
 
-    protected function onException(\Throwable $throwable,...$args){
+    protected function onException(\Throwable $throwable, ...$args)
+    {
         throw $throwable;
     }
 
@@ -196,22 +217,23 @@ abstract class AbstractProcess
          * 由于Swoole底层使用了epoll的LT模式，因此swoole_event_add添加的事件监听，
          * 在事件发生后回调函数中必须调用read方法读取socket中的数据，否则底层会持续触发事件回调。
          */
+        $process->read();
         $task = unserialize($process->read());
         if (is_callable($task)) {
             //可调用的函数
             call_user_func($task);
-        }else if ($task instanceof TaskInterface) {
+        } else if ($task instanceof TaskInterface) {
             //兼容task类
-            try{
-                $task->run(0,0);
-            }catch (\Throwable $throwable){
-                $task->onException($throwable,0,0);
+            try {
+                $task->run(0, 0);
+            } catch (\Throwable $throwable) {
+                $task->onException($throwable, 0, 0);
             }
-        }else if ($task instanceof ProcessMessageInterface) {
+        } else if ($task instanceof ProcessMessageInterface) {
             //正常通信实现该类
-            try{
+            try {
                 $task->run();
-            }catch (\Throwable $throwable){
+            } catch (\Throwable $throwable) {
                 $task->onException($throwable);
             }
         }

@@ -8,9 +8,12 @@
 
 namespace EsSwoole\Base\Provider;
 
+use EasySwoole\Component\Di;
 use EasySwoole\Component\Singleton;
+use EasySwoole\EasySwoole\SysConst;
 use EsSwoole\Base\Common\Composer;
 use EsSwoole\Base\Common\ConfigLoad;
+use EsSwoole\Base\Log\Logger;
 
 class ServiceProvider
 {
@@ -26,12 +29,24 @@ class ServiceProvider
     public function __construct()
     {
         //加载config目录的配置
-        ConfigLoad::loadDir(configPath(),configPath(),'php');
+        ConfigLoad::loadFile('esCommon', configPath('esCommon.php'));
+        ConfigLoad::loadFile('statusCode', configPath('statusCode.php'));
 
         //协程hook处理
         if (config('esCommon.swooleHook')) {
             \Co::set(['hook_flags' => config('esCommon.swooleHook')]);
         }
+
+        //设置日志handler
+        $logger = new Logger();
+        Di::getInstance()->set(SysConst::LOGGER_HANDLER, $logger);
+        \EasySwoole\EasySwoole\Logger::getInstance($logger);
+
+        //替换框架内的AbstractProcess,用来分发进程启动事件
+        file_put_contents(
+            EASYSWOOLE_ROOT . '/vendor/easyswoole/component/src/Process/AbstractProcess.php',
+            file_get_contents(__DIR__ . '/../Abstracts/AbstractReplaceProcess.php')
+        );
 
         //发现的服务提供者
         $providerArr = array_values(Composer::getInstance()->getProvider());
