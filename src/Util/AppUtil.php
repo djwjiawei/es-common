@@ -12,8 +12,11 @@ namespace EsSwoole\Base\Util;
 class AppUtil
 {
 
-    //测试环境
+    //开发环境
     const DEV_ENV = 'dev';
+
+    //测试环境
+    const TEST_ENV = 'test';
 
     //生产环境
     const PROD_ENV = 'prod';
