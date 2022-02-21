@@ -8,7 +8,6 @@
 
 namespace EsSwoole\Base\Abstracts;
 
-
 use EasySwoole\Component\Di;
 use EasySwoole\EasySwoole\SysConst;
 use EsSwoole\Base\Exception\LogicAssertException;
@@ -17,42 +16,54 @@ use EasySwoole\Http\AbstractInterface\Controller;
 use EsSwoole\Base\Util\RequestUtil;
 use EsSwoole\Base\Util\ValidateUtil;
 
-abstract Class BaseHttpController extends Controller
+abstract class BaseHttpController extends Controller
 {
 
     /**
      * action执行前 执行的方法
+     *
      * @param string|null $action
+     *
      * @return bool|null
      * User: dongjw
      * Date: 2022/1/28 16:52
      */
     protected function onRequest(?string $action): ?bool
     {
+        if (!method_exists($this, $action)) {
+            $this->actionNotFound($action);
+
+            return false;
+        }
+
         //执行中间件
-        $middlewareBeforeRes = MiddlewareManager::getInstance()->handelBefore($this->request(),$this->response());
+        $middlewareBeforeRes = MiddlewareManager::getInstance()->handelBefore($this->request(), $this->response());
         if (!$middlewareBeforeRes) {
             return false;
         }
+
         return true;
     }
 
     /**
      * action执行完后 执行的方法
+     *
      * @param string|null $actionName
      * User: dongjw
      * Date: 2022/1/28 16:51
      */
     protected function afterAction(?string $actionName): void
     {
-        MiddlewareManager::getInstance()->handelAfter($this->request(),$this->response());
+        MiddlewareManager::getInstance()->handelAfter($this->request(), $this->response());
     }
 
     /**
      * 输出一个json数据
-     * @param int $code
+     *
+     * @param int    $code
      * @param string $msg
-     * @param array $data
+     * @param array  $data
+     *
      * @return bool
      * User: dongjw
      * Date: 2022/1/28 16:51
@@ -64,7 +75,9 @@ abstract Class BaseHttpController extends Controller
 
     /**
      * 输出api数据
+     *
      * @param array $apiData ['code' => 0, 'msg' => '', 'data' => []]
+     *
      * @return bool
      * User: dongjw
      * Date: 2022/1/28 16:50
@@ -76,8 +89,10 @@ abstract Class BaseHttpController extends Controller
 
     /**
      * 输出success数据
-     * @param array $data
+     *
+     * @param array  $data
      * @param string $msg
+     *
      * @return bool
      * User: dongjw
      * Date: 2022/1/28 16:49
@@ -89,8 +104,10 @@ abstract Class BaseHttpController extends Controller
 
     /**
      * 输出fail数据,code为LogicAssertException默认错误码
+     *
      * @param string $msg
-     * @param array $data
+     * @param array  $data
+     *
      * @return bool
      * User: dongjw
      * Date: 2022/1/28 16:49
@@ -102,7 +119,9 @@ abstract Class BaseHttpController extends Controller
 
     /**
      * 校验get参数
+     *
      * @param $rules
+     *
      * @return mixed
      * @throws LogicAssertException
      * User: dongjw
@@ -110,12 +129,14 @@ abstract Class BaseHttpController extends Controller
      */
     public function validateGet($rules)
     {
-        return $this->validateData($rules,$this->request()->getQueryParams());
+        return $this->validateData($rules, $this->request()->getQueryParams());
     }
 
     /**
      * 校验post form参数
+     *
      * @param $rules
+     *
      * @return mixed
      * @throws LogicAssertException
      * User: dongjw
@@ -123,12 +144,14 @@ abstract Class BaseHttpController extends Controller
      */
     public function validateForm($rules)
     {
-        return $this->validateData($rules,$this->request()->getParsedBody());
+        return $this->validateData($rules, $this->request()->getParsedBody());
     }
 
     /**
      * 校验json参数
+     *
      * @param $rules
+     *
      * @return mixed
      * @throws LogicAssertException
      * User: dongjw
@@ -136,12 +159,14 @@ abstract Class BaseHttpController extends Controller
      */
     public function validateJson($rules)
     {
-        return $this->validateData($rules,$this->getJsonData());
+        return $this->validateData($rules, $this->getJsonData());
     }
 
     /**
      * 校验所有请求参数
+     *
      * @param $rules
+     *
      * @return mixed
      * @throws LogicAssertException
      * User: dongjw
@@ -150,28 +175,32 @@ abstract Class BaseHttpController extends Controller
     public function validate($rules)
     {
         //将get query和post body与raw数据合并进行校验
-        return $this->validateData($rules,$this->getAllInput());
+        return $this->validateData($rules, $this->getAllInput());
     }
 
     /**
      * 校验参数(校验成功后返回校验的参数,失败直接抛出异常)
+     *
      * @param $rules
      * @param $params
+     *
      * @return mixed
      * @throws LogicAssertException
      * User: dongjw
      * Date: 2022/1/28 16:47
      */
-    public function validateData($rules,$params)
+    public function validateData($rules, $params)
     {
         if (!$params) {
             throw new LogicAssertException('请求参数为空');
         }
-        return ValidateUtil::validate($rules,$params);
+
+        return ValidateUtil::validate($rules, $params);
     }
 
     /**
      * 获取请求中的json数据
+     *
      * @return array|mixed
      * User: dongjw
      * Date: 2022/1/28 16:47
@@ -182,22 +211,25 @@ abstract Class BaseHttpController extends Controller
         if ($raw) {
             return json_decode($raw, true) ?: [];
         }
+
         return [];
     }
 
     /**
      * 获取request中的所有请求参数
+     *
      * @return array
      * User: dongjw
      * Date: 2022/1/28 16:47
      */
     public function getAllInput()
     {
-        return array_merge($this->request()->getRequestParam() ?: [],$this->getJsonData());
+        return array_merge($this->request()->getRequestParam() ?: [], $this->getJsonData());
     }
 
     /**
      * action未找到时 执行的方法
+     *
      * @param string|null $action
      * User: dongjw
      * Date: 2021/9/13 11:49
@@ -209,6 +241,7 @@ abstract Class BaseHttpController extends Controller
 
     /**
      * 重写异常捕获,以便中间件可以拿到异常时的响应
+     *
      * @param \Throwable $throwable
      * User: dongjw
      * Date: 2021/12/15 12:49
@@ -218,8 +251,11 @@ abstract Class BaseHttpController extends Controller
         if ($throwable instanceof LogicAssertException) {
             //如果是logic异常,直接输出
             $this->outJson($throwable->getCode(), $throwable->getMessage());
-        }else{
-            call_user_func(Di::getInstance()->get(SysConst::HTTP_EXCEPTION_HANDLER),$throwable,$this->request(),$this->response());
+        } else {
+            call_user_func(
+                Di::getInstance()->get(SysConst::HTTP_EXCEPTION_HANDLER), $throwable, $this->request(),
+                $this->response()
+            );
         }
     }
 
