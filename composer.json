@@ -13,6 +13,12 @@
             "email": "dongjw.1@jifenn.com"
         }
     ],
+    "repositories": [
+        {
+            "type": "git",
+            "url": "git@git.dev.enbrands.com:php-team/coding-standard.git"
+        }
+    ],
     "require": {
         "easyswoole/easyswoole": "3.5.x",
         "easyswoole/redis-pool": "^2.2",
@@ -26,5 +32,12 @@
             "config" : "EsSwoole\\Base\\ConfigPublish",
             "provider" : "EsSwoole\\Base\\Provider\\EsProvider"
         }
-    }
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^3.6",
+        "enbrands/coding-standard": "dev-master"
+    },
+    "bin": [
+        "bin/es"
+    ]
 }
