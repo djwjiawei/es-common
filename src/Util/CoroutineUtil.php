@@ -10,10 +10,16 @@ namespace EsSwoole\Base\Util;
 
 use Swoole\Coroutine;
 
+/**
+ * Class CoroutineUtil
+ *
+ * @author dongjw <dongjw.1@jifenn.com>
+ */
 class CoroutineUtil
 {
     /**
      * 获取顶级协程id
+     *
      * @return mixed
      * User: dongjw
      * Date: 2021/11/19 15:00
@@ -26,16 +32,18 @@ class CoroutineUtil
                 $tmpId = Coroutine::getPcid($topId);
                 if ($tmpId > 0) {
                     $topId = $tmpId;
-                }else{
+                } else {
                     $hasParent = false;
                 }
             }
         }
+
         return $topId;
     }
 
     /**
      * 是否在协程中
+     *
      * @return bool
      * User: dongjw
      * Date: 2021/12/6 15:17

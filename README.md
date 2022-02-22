@@ -25,13 +25,14 @@ composer require es-swoole/common:(dev-master或具体tag)
 - [x] 一些公共函数
 - [x] 向指定进程同步信息
 - [x] 中间件
+- [x] 代码格式校验和修复
 
 ## 使用步骤
 1. 安装easyswoole
 2. 在dev/produce.php中添加APP_ENV='dev/test/prod' 用于标识当前启动服务是开发/测试/生产 环境
 3. 安装本包(composer require es-swoole/common:dev-master或具体tag)
 4. 在根目录的bootstrap文件中添加:
-\EasySwoole\Command\CommandManager::getInstance()->addCommand(new \EsSwoole\Base\Command\PublishConfig());  用于发布vendor包配置 (命令为php easyswoole publish:config --vendor=包名)
+\EsSwoole\Base\Provider\CommandLoad::getInstance()->load(); 用于加载vendor包的command
 5. 执行php easyswoole publish:config --vendor=es-swoole/common 发布本包配置
 6. 修改发布的配置（异常和邮件配置）
 7. 在EasySwooleEvent的initialize方法中添加ServiceProvider::getInstance()->registerVendor(); 用户初始化vendor包的服务提供者
@@ -85,4 +86,28 @@ $this->fail('msg');
 
 //7. 中间件(在middleware配置文件中添加对应的中间件)
 //支持1. 全局中间件(*) 2.路由完全匹配中间件 3.路由正则中间件(/index/*/test; /index*; /index/te*/dong$)
+```
+
+## 代码格式校验和修复
+```
+1. 引入该包后，如果需要使用代码检测和修复 需要在composer.json修改如下：
+"repositories": [
+    {
+        "type": "git",
+        "url": "git@git.dev.enbrands.com:php-team/coding-standard.git"
+    }
+]
+dev 中引入：
+"require-dev": {
+    "enbrands/coding-standard": "dev-master",
+    "squizlabs/php_codesniffer": "^3.6"
+}
+
+2. 代码格式检测命令：
+公共包仓库检测的时候用bin/es phpcs 检查路径(默认为App或src)
+项目仓库检查的时候可以用vendor/bin/es phpcs 检查路径(默认为App或src)
+
+3. 代码格式修复命令：
+公共包仓库检测的时候用bin/es phpcbf 修复路径(默认为App或src)
+项目仓库检查的时候可以用vendor/bin/es phpcbf 修复路径(默认为App或src)
 ```

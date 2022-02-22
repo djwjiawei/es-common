@@ -8,9 +8,13 @@
 
 namespace EsSwoole\Base\Command;
 
-use EasySwoole\Command\CommandManager;
 use Swoole\Coroutine\System;
 
+/**
+ * Trait PhpCsHelper
+ *
+ * @package EsSwoole\Base\Command
+ */
 trait PhpCsHelper
 {
     /**
@@ -29,12 +33,16 @@ trait PhpCsHelper
     protected $phpVersion4ProductionEnv = '70425';
 
     /**
-     * @var string enbrands校验规则标准名
+     * Enbrands校验规则标准名
+     *
+     * @var string
      */
     protected $enbrandsStandardName = 'Enbrands';
 
     /**
-     * @var int 进程退出成功码
+     * 进程退出成功码
+     *
+     * @var int
      */
     protected $exitSuccessCode = 0;
 
@@ -51,9 +59,8 @@ trait PhpCsHelper
     /**
      * 初始化云积分代码风格规范的设置
      *
-     * @param string $phpcs
-     *
-     * @return int
+     * @return bool|int
+     * @throws \Exception
      */
     public function initConfig()
     {
@@ -69,9 +76,8 @@ trait PhpCsHelper
     /**
      * 初始化云积分代码风格规范的设置
      *
-     * @param string $bin
-     *
-     * @return int
+     * @return bool
+     * @throws \Exception
      */
     public function initEnbrandsConfig()
     {
@@ -81,19 +87,24 @@ trait PhpCsHelper
             "{$bin} --config-set default_standard Enbrands",
             "{$bin} --config-set installed_paths {$this->getEnbrandsStdPath()}",
             "{$bin} --config-set php_version {$this->phpVersion4ProductionEnv}",
-            "{$bin} --config-show"
+            "{$bin} --config-show",
         ];
-        $res = System::exec(implode(' && ', $commands));
+        $res      = System::exec(implode(' && ', $commands));
 
         if ($res['code'] != $this->exitSuccessCode) {
             throw new \Exception($res['output'] ?: '初始化enbrands standard异常');
-        }else{
+        } else {
             echo $res['output'] . PHP_EOL;
         }
 
         return true;
     }
 
+    /**
+     * 获取代码格式校验的缓存路径
+     *
+     * @return string
+     */
     protected function getCachePath()
     {
         $dir = sys_get_temp_dir() ?: '.';
@@ -101,6 +112,12 @@ trait PhpCsHelper
         return $dir . '/' . $this->cacheFile;
     }
 
+    /**
+     * 获取校验的默认目录
+     *
+     * @return string
+     * @throws \Exception
+     */
     protected function getCheckDefaultPath()
     {
         //先默认为app目录

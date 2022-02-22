@@ -15,20 +15,41 @@ use EasySwoole\Command\CommandManager;
 use Swoole\Coroutine\System;
 use function Co\run;
 
+/**
+ * 代码格式校验命令
+ *
+ * @author dongjw <dongjw.1@jifenn.com>
+ */
 class PhpCs implements CommandInterface
 {
     use PhpCsHelper;
 
     /**
-     * @var string 校验的文件路径
+     * 校验的文件路径
+     *
+     * @var string
      */
     protected $path;
 
+    /**
+     * 命令名
+     *
+     * @return string
+     * User: dongjw
+     * Date: 2022/2/22 15:00
+     */
     public function commandName(): string
     {
         return 'phpcs';
     }
 
+    /**
+     * Exec
+     *
+     * @return string|null
+     * User: dongjw
+     * Date: 2022/2/22 15:01
+     */
     public function exec(): ?string
     {
         //获取命令行参数
@@ -42,71 +63,89 @@ class PhpCs implements CommandInterface
         //运行结果
         $runRes = true;
 
-        run(function () use(&$runRes, $runArgv) {
-            try {
-                //检查依赖
-                if (!file_exists(EASYSWOOLE_ROOT . '/vendor/bin/phpcs')) {
-                    throw new \Exception('请先安装squizlabs/php_codesniffer依赖');
-                }
-
-                if ($runArgv) {
-                    //运行命令参数
-                    $runCommand = implode(' ', $runArgv);
-
-                    //如果没有cache,添加默认cache
-                    if (strpos($runCommand, '--cache') === false) {
-                        $runCommand .= ' --cache='. $this->getCachePath();
+        run(
+            function () use (&$runRes, $runArgv) {
+                try {
+                    //检查依赖
+                    if (!file_exists(EASYSWOOLE_ROOT . '/vendor/bin/phpcs')) {
+                        throw new \Exception('请先安装squizlabs/php_codesniffer依赖');
                     }
 
-                    echo Color::info("checking...") . PHP_EOL;
-                }else{
-                    //校验路径检查
-                    $checkPath = $this->getCheckDefaultPath();
+                    if ($runArgv) {
+                        //运行命令参数
+                        $runCommand = implode(' ', $runArgv);
 
-                    $runCommand = $checkPath . ' --cache=' . $this->getCachePath();
+                        //如果没有cache,添加默认cache
+                        if (strpos($runCommand, '--cache') === false) {
+                            $runCommand .= ' --cache=' . $this->getCachePath();
+                        }
 
-                    echo Color::info("checking {$checkPath}...") . PHP_EOL;
+                        echo Color::info('checking...') . PHP_EOL;
+                    } else {
+                        //校验路径检查
+                        $checkPath = $this->getCheckDefaultPath();
+
+                        $runCommand = $checkPath . ' --cache=' . $this->getCachePath();
+
+                        echo Color::info("checking {$checkPath}...") . PHP_EOL;
+                    }
+
+                    //初始化校验配置
+                    $this->initConfig();
+
+                    //执行检查
+                    $res = System::exec(
+                        EASYSWOOLE_ROOT . '/vendor/bin/phpcs ' . $runCommand
+                    );
+
+                    if ($res['code'] != $this->exitSuccessCode) {
+                        throw new \Exception($res['output']);
+                    } else {
+                        echo $res['output'] . PHP_EOL;
+                    }
+                } catch (\Throwable $e) {
+                    echo Color::error($e->getMessage()) . PHP_EOL;
+                    $runRes = false;
                 }
-
-                //初始化校验配置
-                $this->initConfig();
-
-                //执行检查
-                $res = System::exec(
-                    EASYSWOOLE_ROOT . '/vendor/bin/phpcs '.
-                    $runCommand
-                );
-
-                if ($res['code'] != $this->exitSuccessCode) {
-                    throw new \Exception($res['output']);
-                }else{
-                    echo $res['output'] . PHP_EOL;
-                }
-
-            } catch (\Throwable $e) {
-                echo Color::error($e->getMessage()) . PHP_EOL;
-                $runRes = false;
             }
-        });
+        );
 
         if ($runRes) {
             return Color::success('check success');
-        }else{
+        } else {
             exit(1);
         }
     }
 
+    /**
+     * 执行-h后的执行逻辑
+     *
+     * @param CommandHelpInterface $commandHelp
+     *
+     * @return CommandHelpInterface
+     * User: dongjw
+     * Date: 2022/2/22 15:01
+     */
     public function help(CommandHelpInterface $commandHelp): CommandHelpInterface
     {
         $res = ['output' => ''];
-        run(function () use(&$res) {
-            $res = System::exec(EASYSWOOLE_ROOT . '/vendor/bin/phpcs -h');
-        });
+        run(
+            function () use (&$res) {
+                $res = System::exec(EASYSWOOLE_ROOT . '/vendor/bin/phpcs -h');
+            }
+        );
         $commandHelp->addActionOpt('', $res['output']);
 
         return $commandHelp;
     }
 
+    /**
+     * 命令描述
+     *
+     * @return string
+     * User: dongjw
+     * Date: 2022/2/22 15:01
+     */
     public function desc(): string
     {
         return '检查 代码风格（支持的参数与选项参见 -h）, 默认检查路径为App或src';

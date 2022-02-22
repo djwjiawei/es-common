@@ -8,12 +8,12 @@
 
 namespace EsSwoole\Base\Redis;
 
-
 use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 
 /**
  * 字符串
+ *
  * @method set($key, $val, $timeout = 0)
  * @method get($key)
  * @method mGet($keys)
@@ -80,7 +80,6 @@ use EasySwoole\RedisPool\RedisPool;
  *
  * @see \EasySwoole\Redis\Redis
  */
-
 abstract class AbstractRedisPool
 {
 
@@ -92,64 +91,81 @@ abstract class AbstractRedisPool
 
     /**
      * 键不存在时设置
-     * @param $key
-     * @param $val
-     * @param int $expireTime
+     *
+     * @param string $key
+     * @param string $val
+     * @param int    $expireTime
+     *
      * @return mixed|null
      * User: dongjw
      * Date: 2021/9/14 16:25
      */
-    public function setNx($key,$val,$expireTime = 0)
+    public function setNx($key, $val, $expireTime = 0)
     {
-        return RedisPool::invoke(function (Redis $redis) use($key,$val,$expireTime) {
-            return $redis->set($key, $val, ['NX','EX' => $expireTime]);
-        },$this->connection,$this->poolTimeout);
+        return RedisPool::invoke(
+            function (Redis $redis) use ($key, $val, $expireTime) {
+                return $redis->set($key, $val, ['NX', 'EX' => $expireTime]);
+            }, $this->connection, $this->poolTimeout
+        );
     }
 
     /**
      * 键已存在时设置
-     * @param $key
-     * @param $val
+     *
+     * @param string $key
+     * @param string $val
+     * @param int    $expireTime
+     *
      * @return mixed|null
      * User: dongjw
      * Date: 2021/9/14 16:25
      */
-    public function setXx($key,$val,$expireTime = 0)
+    public function setXx($key, $val, $expireTime = 0)
     {
-        return RedisPool::invoke(function (Redis $redis) use($key,$val,$expireTime) {
-            return $redis->set($key, $val, ['XX','EX' => $expireTime]);
-        },$this->connection,$this->poolTimeout);
+        return RedisPool::invoke(
+            function (Redis $redis) use ($key, $val, $expireTime) {
+                return $redis->set($key, $val, ['XX', 'EX' => $expireTime]);
+            }, $this->connection, $this->poolTimeout
+        );
     }
 
     /**
-     * zadd,如果keu不存在设置过期时间
-     * @param $key
-     * @param $score
-     * @param $member
-     * @param $expireTime
+     * Zadd,如果keu不存在设置过期时间
+     *
+     * @param string $key
+     * @param int    $score
+     * @param string $member
+     * @param int    $expireTime
+     *
      * @return mixed|null
      * User: dongjw
      * Date: 2021/12/14 18:13
      */
     public function zaddLock($key, $score, $member, $expireTime)
     {
-        return RedisPool::invoke(function (Redis $redis) use($key, $score, $member, $expireTime) {
-            return $redis->rawCommand([
-                'eval',
-                $this->getZaddExpireLua(),
-                '1',
-                $key,
-                $score,
-                $member,
-                $expireTime
-            ]);
-        },$this->connection,$this->poolTimeout);
+        return RedisPool::invoke(
+            function (Redis $redis) use ($key, $score, $member, $expireTime) {
+                return $redis->rawCommand(
+                    [
+                        'eval',
+                        $this->getZaddExpireLua(),
+                        '1',
+                        $key,
+                        $score,
+                        $member,
+                        $expireTime,
+                    ]
+                );
+            }, $this->connection, $this->poolTimeout
+        );
     }
 
     /**
-     * lock指定所有者
-     * @param $key
-     * @param $expire
+     * Lock指定所有者
+     *
+     * @param string $key
+     * @param int    $expire
+     *
      * @return bool|string
      * User: dongjw
      * Date: 2022/1/12 19:57
@@ -157,33 +173,44 @@ abstract class AbstractRedisPool
     public function ownerLock($key, $expire)
     {
         $owner = uniqid();
-        $res = $this->setNx($key, $owner, $expire);
+        $res   = $this->setNx($key, $owner, $expire);
         if ($res) {
             return $owner;
-        }else{
+        } else {
             return false;
         }
     }
 
     /**
      * 只能释放知道所有者的lock
-     * @param $key
-     * @param $owner
+     *
+     * @param string $key
+     * @param string $owner
+     *
      * @return bool
      * User: dongjw
      * Date: 2022/1/12 19:58
      */
     public function delOwnerLock($key, $owner)
     {
-        return (bool) $this->rawCommand([
-            'eval',
-            $this->getReleaseLockLua(),
-            '1',
-            $key,
-            $owner
-        ]);
+        return (bool)$this->rawCommand(
+            [
+                'eval',
+                $this->getReleaseLockLua(),
+                '1',
+                $key,
+                $owner,
+            ]
+        );
     }
 
+    /**
+     * 获取zadd过期lua脚本
+     *
+     * @return string
+     * User: dongjw
+     * Date: 2022/2/22 17:25
+     */
     protected function getZaddExpireLua()
     {
         return <<<'LUA'
@@ -202,6 +229,13 @@ end
 LUA;
     }
 
+    /**
+     * 获取释放锁lua脚本
+     *
+     * @return string
+     * User: dongjw
+     * Date: 2022/2/22 17:25
+     */
     protected function getReleaseLockLua()
     {
         return <<<'LUA'
@@ -213,10 +247,22 @@ end
 LUA;
     }
 
+    /**
+     * 调用redis方法找不到时 执行的方法
+     *
+     * @param string $name
+     * @param mixed  $arguments
+     *
+     * @return mixed|null
+     * User: dongjw
+     * Date: 2022/2/22 17:24
+     */
     public function __call($name, $arguments)
     {
-        return RedisPool::invoke(function (Redis $redis) use($name,$arguments) {
-            return call_user_func_array([$redis, $name], $arguments);
-        },$this->connection,$this->poolTimeout);
+        return RedisPool::invoke(
+            function (Redis $redis) use ($name, $arguments) {
+                return call_user_func_array([$redis, $name], $arguments);
+            }, $this->connection, $this->poolTimeout
+        );
     }
 }
