@@ -30,7 +30,12 @@
     "extra": {
         "es-swoole": {
             "config" : "EsSwoole\\Base\\ConfigPublish",
-            "provider" : "EsSwoole\\Base\\Provider\\EsProvider"
+            "provider" : "EsSwoole\\Base\\Provider\\EsProvider",
+            "command" : [
+                "EsSwoole\\Base\\Command\\Phpcs",
+                "EsSwoole\\Base\\Command\\phpCodeFix",
+                "EsSwoole\\Base\\Command\\PublishConfig"
+            ]
         }
     },
     "require-dev": {

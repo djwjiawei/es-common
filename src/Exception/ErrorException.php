@@ -8,10 +8,22 @@
 
 namespace EsSwoole\Base\Exception;
 
-
+/**
+ * Class ErrorException
+ *
+ * @author dongjw <dongjw.1@jifenn.com>
+ */
 class ErrorException extends \Exception
 {
-    public function __construct($message = "", $code = 0, $file = '', $line = '')
+    /**
+     * ErrorException constructor.
+     *
+     * @param string $message
+     * @param int    $code
+     * @param string $file
+     * @param string $line
+     */
+    public function __construct($message = '', $code = 0, $file = '', $line = '')
     {
         parent::__construct($message, $code);
         $this->file = $file;

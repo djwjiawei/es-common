@@ -12,11 +12,18 @@ use EasySwoole\EasySwoole\Logger;
 class Prometheus
 {
     public $tables         = []; // 共享内存表集合
+
     public $currentTable   = null; // 当前使用内存表
+
     public $fileName       = 'metrics.log';
+
     public $finishFileName = 'finish.log';
+
     public $tmpDir         = '/tmp/prometheus_metrics_data/';
 
+    /**
+     * Prometheus constructor.
+     */
     public function __construct()
     {
         if (empty($this->tables)) { //初始化数据
@@ -57,7 +64,6 @@ class Prometheus
      * @return bool
      *
      * @example Di::getInstance()->get('prometheus')->add('return_num', 4, ['category' => 'clothes', 'type' => 1]);
-     *
      */
     public function add(string $key, int $num = 1, array $labels = [], string $desc = ''): bool
     {
@@ -170,7 +176,6 @@ class Prometheus
      * @param array  $data
      *
      * @return string
-     *
      */
     public function formatData(string $metricsKey, array $data): string
     {

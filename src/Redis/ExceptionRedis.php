@@ -8,9 +8,13 @@
 
 namespace EsSwoole\Base\Redis;
 
-
 use EasySwoole\Component\Singleton;
 
+/**
+ * 异常redis类
+ *
+ * @author dongjw <dongjw.1@jifenn.com>
+ */
 class ExceptionRedis extends AbstractRedisPool
 {
     use Singleton;
@@ -21,19 +25,32 @@ class ExceptionRedis extends AbstractRedisPool
     //过期时间
     protected $timeout = 300;
 
+    /**
+     * ExceptionRedis constructor.
+     */
     public function __construct()
     {
         if (config('esCommon.exception.redis')) {
             $this->connection = config('esCommon.exception.redis');
         }
+
         if (config('esCommon.exception.mailTimeout')) {
             $this->timeout = config('esCommon.exception.mailTimeout');
         }
     }
 
+    /**
+     * 检验是否可以发送异常
+     *
+     * @param string $key
+     *
+     * @return mixed|null
+     * User: dongjw
+     * Date: 2022/2/22 18:06
+     */
     public function check($key)
     {
-        return $this->setNx(self::EXCEPTION_KEY . $key,1,$this->timeout);
+        return $this->setNx(self::EXCEPTION_KEY . $key, 1, $this->timeout);
     }
 
 }

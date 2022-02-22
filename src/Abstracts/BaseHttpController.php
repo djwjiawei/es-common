@@ -16,17 +16,22 @@ use EasySwoole\Http\AbstractInterface\Controller;
 use EsSwoole\Base\Util\RequestUtil;
 use EsSwoole\Base\Util\ValidateUtil;
 
+/**
+ * 抽象控制器类
+ *
+ * @author dongjw <dongjw.1@jifenn.com>
+ */
 abstract class BaseHttpController extends Controller
 {
 
     /**
-     * action执行前 执行的方法
+     * Action执行前 执行的方法
      *
      * @param string|null $action
      *
      * @return bool|null
      * User: dongjw
-     * Date: 2022/1/28 16:52
+     * Date: 2022/2/22 14:17
      */
     protected function onRequest(?string $action): ?bool
     {
@@ -46,7 +51,7 @@ abstract class BaseHttpController extends Controller
     }
 
     /**
-     * action执行完后 执行的方法
+     * Action执行完后 执行的方法
      *
      * @param string|null $actionName
      * User: dongjw
@@ -120,7 +125,7 @@ abstract class BaseHttpController extends Controller
     /**
      * 校验get参数
      *
-     * @param $rules
+     * @param array $rules
      *
      * @return mixed
      * @throws LogicAssertException
@@ -135,7 +140,7 @@ abstract class BaseHttpController extends Controller
     /**
      * 校验post form参数
      *
-     * @param $rules
+     * @param array $rules
      *
      * @return mixed
      * @throws LogicAssertException
@@ -150,7 +155,7 @@ abstract class BaseHttpController extends Controller
     /**
      * 校验json参数
      *
-     * @param $rules
+     * @param array $rules
      *
      * @return mixed
      * @throws LogicAssertException
@@ -165,7 +170,7 @@ abstract class BaseHttpController extends Controller
     /**
      * 校验所有请求参数
      *
-     * @param $rules
+     * @param array $rules
      *
      * @return mixed
      * @throws LogicAssertException
@@ -181,8 +186,8 @@ abstract class BaseHttpController extends Controller
     /**
      * 校验参数(校验成功后返回校验的参数,失败直接抛出异常)
      *
-     * @param $rules
-     * @param $params
+     * @param array $rules
+     * @param array $params
      *
      * @return mixed
      * @throws LogicAssertException
@@ -228,7 +233,7 @@ abstract class BaseHttpController extends Controller
     }
 
     /**
-     * action未找到时 执行的方法
+     * Action未找到时 执行的方法
      *
      * @param string|null $action
      * User: dongjw

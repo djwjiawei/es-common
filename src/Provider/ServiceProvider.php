@@ -15,6 +15,11 @@ use EsSwoole\Base\Common\Composer;
 use EsSwoole\Base\Common\ConfigLoad;
 use EsSwoole\Base\Log\Logger;
 
+/**
+ * Class ServiceProvider
+ *
+ * @author dongjw <dongjw.1@jifenn.com>
+ */
 class ServiceProvider
 {
 
@@ -26,6 +31,9 @@ class ServiceProvider
 
     protected $providerArr = [];
 
+    /**
+     * ServiceProvider constructor.
+     */
     public function __construct()
     {
         //加载config目录的配置
@@ -45,7 +53,7 @@ class ServiceProvider
         //替换框架内的AbstractProcess,用来分发进程启动事件
         file_put_contents(
             EASYSWOOLE_ROOT . '/vendor/easyswoole/component/src/Process/AbstractProcess.php',
-            file_get_contents(__DIR__ . '/../Abstracts/AbstractReplaceProcess.php')
+            file_get_contents(__DIR__ . '/../../Replace/AbstractReplaceProcess.php')
         );
 
         //发现的服务提供者
@@ -65,6 +73,7 @@ class ServiceProvider
 
     /**
      * 调用vendor包服务提供者的register方法(写在EasySwooleEvent的initialize方法中,可以在该方法中合并配置、初始化工作)
+     *
      * @return bool
      * User: dongjw
      * Date: 2021/11/24 15:48
@@ -74,17 +83,20 @@ class ServiceProvider
         if ($this->hasRegist) {
             return false;
         }
+
         foreach ($this->providerArr as $provider) {
             $obj = new $provider();
             if (method_exists($obj, 'register')) {
                 $obj->register();
             }
         }
+
         return true;
     }
 
     /**
      * 调用vendor包服务提供者的boot方法(写在EasySwooleEvent的mainServerCreate方法中)
+     *
      * @return bool
      * User: dongjw
      * Date: 2021/11/24 15:49
@@ -94,12 +106,14 @@ class ServiceProvider
         if ($this->hasBoot) {
             return false;
         }
+
         foreach ($this->providerArr as $provider) {
             $obj = new $provider();
             if (method_exists($obj, 'boot')) {
                 $obj->boot();
             }
         }
+
         return true;
     }
 }

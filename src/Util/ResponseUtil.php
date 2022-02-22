@@ -8,18 +8,24 @@
 
 namespace EsSwoole\Base\Util;
 
-
 use EasySwoole\Http\Response;
 
+/**
+ * Http响应类
+ *
+ * @author dongjw <dongjw.1@jifenn.com>
+ */
 class ResponseUtil
 {
     /**
      * 按返回格式 统一返回json
+     *
      * @param Response $response
-     * @param $code
-     * @param $msg
-     * @param $data
-     * @param array $extraData
+     * @param int      $code
+     * @param string   $msg
+     * @param array    $data
+     * @param array    $extraData
+     *
      * @return bool
      * User: dongjw
      * Date: 2022/1/28 17:38
@@ -28,15 +34,17 @@ class ResponseUtil
     {
         if (!$response->isEndResponse()) {
             $return = [
-                "retcode" => $code,
-                "errmsg" => $msg,
-                "content" => $data
+                'retcode' => $code,
+                'errmsg'  => $msg,
+                'content' => $data,
             ];
             if ($extraData) {
                 $return = array_merge($return, $extraData);
             }
-            $response->write(json_encode($return,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+            $response->write(json_encode($return, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $response->withHeader('Content-type', 'application/json;charset=utf-8');
+
             return true;
         } else {
             return false;

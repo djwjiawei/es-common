@@ -17,11 +17,15 @@ class FileUpload
     use Singleton;
 
     protected $ossBucket;
+
     protected $ossPath;
+
     protected $endpoint;
 
     private $ossClient;
+
     private $localPath = EASYSWOOLE_TEMP_DIR . '/upload';
+
     private $allowExt  = [
         'jpg',
         'jpeg',
@@ -35,7 +39,7 @@ class FileUpload
      */
     public function __construct()
     {
-        $aliYunConfig    = config("esCommon.oss.aliyun");
+        $aliYunConfig    = config('esCommon.oss.aliyun');
         $this->ossBucket = $aliYunConfig['oss_bucket'] ?? '';
         $this->ossPath   = $aliYunConfig['oss_path'] ?? '';
         $this->endpoint  = $aliYunConfig['endpoint'] ?? '';
@@ -112,7 +116,6 @@ class FileUpload
         if ($fileObj instanceof \EasySwoole\Http\Message\UploadFile) { // 上传文件对象
             $res              = $this->upload($fileObj);
             $filenameWithPath = $res['data']['local_file'] ?? '';
-
         } else if (is_string($fileObj) && is_file($fileObj)) { // 本地文件
             $filenameWithPath = $fileObj;
         } else if (!empty($filename) && is_string($fileObj)) { // base64图片流
@@ -149,7 +152,7 @@ class FileUpload
      *
      * @return array
      */
-    function uploadImageByBase64(string $baseInfo, string $filename): array
+    public function uploadImageByBase64(string $baseInfo, string $filename): array
     {
         preg_match('/^(data:\s*image\/(\w+);base64,)/', $baseInfo, $result);
         $type       = $result[2] ?? ''; // 文件类型
@@ -199,9 +202,9 @@ class FileUpload
 
             $options = [];
             if (!$onlyContent) { // 初始化下载文件配置及目录
-                $options  = array(
+                $options  = [
                     OSSConst::OSS_FILE_DOWNLOAD => $downloadFile,
-                );
+                ];
                 $localDir = pathinfo($downloadFile)['dirname'] ?? '';
                 if (!File::createDirectory($localDir)) {
                     return Api::fail('download failed.');

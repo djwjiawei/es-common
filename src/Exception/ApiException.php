@@ -8,7 +8,11 @@
 
 namespace EsSwoole\Base\Exception;
 
-
+/**
+ * Class ApiException
+ *
+ * @author dongjw <dongjw.1@jifenn.com>
+ */
 class ApiException extends \Exception
 {
 
