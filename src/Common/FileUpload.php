@@ -116,9 +116,9 @@ class FileUpload
         if ($fileObj instanceof \EasySwoole\Http\Message\UploadFile) { // 上传文件对象
             $res              = $this->upload($fileObj);
             $filenameWithPath = $res['data']['local_file'] ?? '';
-        } else if (is_string($fileObj) && is_file($fileObj)) { // 本地文件
+        } elseif (is_string($fileObj) && is_file($fileObj)) { // 本地文件
             $filenameWithPath = $fileObj;
-        } else if (!empty($filename) && is_string($fileObj)) { // base64图片流
+        } elseif (!empty($filename) && is_string($fileObj)) { // base64图片流
             $res              = $this->uploadImageByBase64($fileObj, $filename);
             $filenameWithPath = $res['data']['local_file'] ?? '';
         } else {

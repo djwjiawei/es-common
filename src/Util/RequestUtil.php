@@ -32,11 +32,6 @@ class RequestUtil
     {
         $cid = Coroutine::getCid();
         if ($cid !== -1 && !isset(self::$requestArr[$cid])) {
-            //request注入traceId
-            $requestTraceId = $request->getHeader('traceid')[0] ?: $request->getRequestParam('traceId');
-            $traceId        = $requestTraceId ?: substr(md5(uniqid()), 8, 16);
-            $request->withAttribute('traceId', $traceId);
-
             self::$requestArr[$cid] = $request;
             //协程退出时,删除请求信息
             defer(

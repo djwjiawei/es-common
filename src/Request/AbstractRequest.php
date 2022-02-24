@@ -8,6 +8,8 @@
 
 namespace EsSwoole\Base\Request;
 
+use EasySwoole\EasySwoole\Logger;
+use EasySwoole\Log\LoggerInterface;
 use EsSwoole\Base\Log\HttpClientLog;
 use EasySwoole\HttpClient\HttpClient;
 use EasySwoole\HttpClient\Bean\Response;
@@ -144,34 +146,42 @@ abstract class AbstractRequest
             }
 
             $res = $client->get();
-        } else if ($method == HttpClient::METHOD_POST) {
+        } elseif ($method == HttpClient::METHOD_POST) {
             $contentType = $header[self::HEADER_CONTENT_TYPE] ?? '';
             $res         = $client->post(
                 $contentType == HttpClient::CONTENT_TYPE_APPLICATION_JSON ? json_encode($params) : $params
             );
-        } else if ($method == HttpClient::METHOD_PUT) {
+        } elseif ($method == HttpClient::METHOD_PUT) {
             $res = $client->put($params);
-        } else if ($method == HttpClient::METHOD_DELETE) {
+        } elseif ($method == HttpClient::METHOD_DELETE) {
             $res = $client->delete();
         }
 
         $endTime = getCurrentMilliseconds();
 
-        HttpClientLog::log(
+        if ($res->getErrCode() == 0) {
+            $tag      = HttpClientLog::LOG_HTTP_SUCCESS;
+            $logLevel = LoggerInterface::LOG_LEVEL_INFO;
+        } else {
+            $tag      = HttpClientLog::LOG_HTTP_FAILURE;
+            $logLevel = LoggerInterface::LOG_LEVEL_ERROR;
+        }
+
+        $msg = HttpClientLog::formatHttpLog(
             [
-                'logTag'       => $res->getErrCode() === 0 ? '_http_success' : '_http_failure',
-                'callee'       => $apiDomain,
-                'request'      => $logParams,
-                'uri'          => $logAction,
-                'response'     => $res->getBody(),
-                'elapsed'      => $endTime - $startTime,
-                'code'         => $res->getStatusCode(),
-                'fileName'     => __FILE__,
-                'functionName' => __FUNCTION__,
-                'number'       => __LINE__,
-                'msg'          => $res->getErrMsg(),
+                'logTag'   => $tag,
+                'callee'   => $apiDomain,
+                'request'  => $logParams,
+                'uri'      => $logAction,
+                'response' => $res->getBody(),
+                'elapsed'  => $endTime - $startTime,
+                'code'     => $res->getStatusCode(),
+                'err_no'   => $res->getErrCode(),
+                'msg'      => $res->getErrMsg(),
             ]
         );
+
+        Logger::getInstance()->log($msg, $logLevel, HttpClientLog::HTTP_REQUEST);
 
         $this->response = $res;
 
