@@ -52,7 +52,7 @@ class ExceptionHandler
                     $data['trace'] = $throwable->getTraceAsString();
                 }
 
-                $data['traceId'] = $request->getAttribute('traceId') ?: '';
+                $data['traceId'] = getTraceId();
 
             //error的已经在set_error_handler中记录了，这里只记录exception的
                 if (!($throwable instanceof ErrorException)) {

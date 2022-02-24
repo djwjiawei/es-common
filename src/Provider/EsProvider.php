@@ -60,13 +60,13 @@ class EsProvider extends AbstractProvider
             $task = unserialize($message);
             if (is_callable($task)) {
                 call_user_func($task);
-            } else if ($task instanceof TaskInterface) {
+            } elseif ($task instanceof TaskInterface) {
                 try {
                     $task->run(0, $serv->worker_id);
                 } catch (\Throwable $throwable) {
                     $task->onException($throwable, 0, $serv->worker_id);
                 }
-            } else if ($task instanceof ProcessMessageInterface) {
+            } elseif ($task instanceof ProcessMessageInterface) {
                 try {
                     $task->run();
                 } catch (\Throwable $throwable) {

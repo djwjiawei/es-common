@@ -8,6 +8,7 @@
 
 use EasySwoole\EasySwoole\Config;
 use EsSwoole\Base\Util\RequestUtil;
+use EsSwoole\Base\Util\TraceIdUtil;
 
 if (!function_exists('config')) {
 
@@ -130,7 +131,7 @@ if (!function_exists('getRequestIp')) {
             if ($request->getHeaders()['x-forwarded-for']) {
                 //有多个代理的情况,nginx 配置X-Forwarded-For
                 return explode(',', $request->getHeaders()['x-forwarded-for'][0])[0];
-            } else if ($request->getHeaders()['x-real-ip']) {
+            } elseif ($request->getHeaders()['x-real-ip']) {
                 //nginx配置x-real-ip
                 return $request->getHeaders()['x-real-ip'][0];
             } else {
@@ -252,7 +253,7 @@ if (!function_exists('retryDuration')) {
 if (!function_exists('getTraceId')) {
 
     /**
-     * 获取traceId,如果request存在则返回request中的traceId否则生成一个新的traceId
+     * 获取traceId,如果没有 则生成一个新的traceId
      *
      * @return string
      * User: dongjw
@@ -260,9 +261,7 @@ if (!function_exists('getTraceId')) {
      */
     function getTraceId()
     {
-        $request = RequestUtil::getRequest();
-
-        return $request ? $request->getAttribute('traceId') : substr(md5(uniqid()), 8, 16);
+        return TraceIdUtil::getCurrentTraceId() ?: TraceIdUtil::generateTraceId();
     }
 }
 
@@ -317,4 +316,83 @@ if (!function_exists('strIndexReplace')) {
         return mb_substr($str, 0, $start) . str_repeat($replace, $repLength) . mb_substr($str, $endIndex);
     }
 
+}
+
+if (!function_exists('expandIniShorthandBytes')) {
+    /**
+     * 将一个带单位的大小转换为字节大小
+     *
+     * @param string $val
+     *
+     * @return bool|int
+     * User: dongjw
+     * Date: 2022/2/23 14:18
+     */
+    function expandIniShorthandBytes($val)
+    {
+        if (!is_string($val)) {
+            return false;
+        }
+
+        // support -1
+        if ((int)$val < 0) {
+            return (int)$val;
+        }
+
+        if (!preg_match('/^\s*(?<val>\d+)(?:\.\d+)?\s*(?<unit>[gmk]?)\s*$/i', $val, $match)) {
+            return false;
+        }
+
+        $val = (int)$match['val'];
+        switch (strtolower($match['unit'] ?? '')) {
+            //单位为G
+            case 'g':
+                $val *= 1024;
+            //单位为M, 为G的话也会到此
+            case 'm':
+                $val *= 1024;
+            //单位为K, 为G或m的话也会到此
+            case 'k':
+                $val *= 1024;
+        }
+
+        return $val;
+    }
+}
+
+if (!function_exists('canonicalizePath')) {
+    /**
+     * 返回一个绝对路径
+     *
+     * @param string $streamUrl
+     *
+     * @return false|string
+     * User: dongjw
+     * Date: 2022/2/23 14:19
+     */
+    function canonicalizePath($streamUrl)
+    {
+        $prefix = '';
+        if ('file://' === substr($streamUrl, 0, 7)) {
+            $streamUrl = substr($streamUrl, 7);
+            $prefix    = 'file://';
+        }
+
+        // other type of stream, not supported
+        if (false !== strpos($streamUrl, '://')) {
+            return $streamUrl;
+        }
+
+        // already absolute
+        if (substr($streamUrl, 0, 1) === '/' ||
+            substr($streamUrl, 1, 1) === ':' ||
+            substr($streamUrl, 0, 2) === '\\\\'
+        ) {
+            return $prefix . $streamUrl;
+        }
+
+        $streamUrl = getcwd() . '/' . $streamUrl;
+
+        return $prefix . $streamUrl;
+    }
 }

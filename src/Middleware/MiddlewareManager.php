@@ -140,7 +140,7 @@ class MiddlewareManager
         foreach ($list as $uri => $uriMiddlewareArr) {
             if ($uri == '*') {
                 $type = self::GLOBAL_TYPE;
-            } else if (strpos($uri, '*') !== false) {
+            } elseif (strpos($uri, '*') !== false) {
                 //出现*时认为是正则中间件
                 $type = self::REGULAR_TYPE;
             } else {

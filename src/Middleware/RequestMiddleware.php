@@ -8,12 +8,15 @@
 
 namespace EsSwoole\Base\Middleware;
 
+use EasySwoole\EasySwoole\Logger;
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
+use EasySwoole\Log\LoggerInterface;
 use EsSwoole\Base\Abstracts\AbstractMiddleware;
 use EsSwoole\Base\Log\HttpClientLog;
 use EsSwoole\Base\Util\AppUtil;
 use EsSwoole\Base\Util\RequestUtil;
+use EsSwoole\Base\Util\TraceIdUtil;
 
 /**
  * 请求中间件
@@ -22,6 +25,7 @@ use EsSwoole\Base\Util\RequestUtil;
  */
 class RequestMiddleware extends AbstractMiddleware
 {
+
     /**
      * 请求之前记录
      *
@@ -37,16 +41,18 @@ class RequestMiddleware extends AbstractMiddleware
         //request注入
         RequestUtil::injectRequest($request);
 
+        //注入traceId
+        $requestTraceId = $request->getHeader('traceid')[0] ?: $request->getRequestParam('traceId');
+        TraceIdUtil::setCurrentTraceId($requestTraceId);
+
         //请求进来log记录
-        HttpClientLog::log(
+        $msg = HttpClientLog::formatHttpLog(
             [
-                'logTag'       => '_request_in',
-                'fileName'     => __FILE__,
-                'functionName' => __FUNCTION__,
-                'number'       => __LINE__,
+                'logTag'       => HttpClientLog::LOG_REQUEST_IN,
                 'msg'          => '==请求开始==',
             ]
         );
+        Logger::getInstance()->log($msg, LoggerInterface::LOG_LEVEL_INFO, HttpClientLog::HTTP_REQUEST);
 
         return true;
     }
@@ -64,18 +70,17 @@ class RequestMiddleware extends AbstractMiddleware
     public function after(Request $request, Response $response)
     {
         //请求结束log记录
-        HttpClientLog::log(
+        $msg = HttpClientLog::formatHttpLog(
             [
-                'logTag'       => '_request_out',
-                'fileName'     => __FILE__,
-                'functionName' => __FUNCTION__,
-                'number'       => __LINE__,
+                'logTag'       => HttpClientLog::LOG_REQUEST_OUT,
                 'code'         => $response->getStatusCode(),
                 'response'     => $response->getBody()->__toString(),
                 'elapsed'      => AppUtil::getElapsedTime(),
                 'msg'          => '==请求结束==||==消耗内存' . AppUtil::getMemoryUsage() . '==',
             ]
         );
+
+        Logger::getInstance()->log($msg, LoggerInterface::LOG_LEVEL_INFO, HttpClientLog::HTTP_REQUEST);
     }
 
 }

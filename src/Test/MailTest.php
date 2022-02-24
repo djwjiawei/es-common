@@ -6,7 +6,7 @@
  * Time: 16:36
  */
 
-require '../../vendor/autoload.php';
+namespace EsSwoole\Base\Test;
 
 /**
  * Class MailTest
@@ -31,5 +31,3 @@ class MailTest
         );
     }
 }
-
-(new MailTest())->send();
