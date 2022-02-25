@@ -140,7 +140,7 @@ class Mail
         $mail->setHost($config['host']);
         $mail->setUsername($config['username']);
         $mail->setPassword($config['password']);
-        $mail->setFrom($config['username'], $config['from']);
+        $mail->setFrom($config['username'], config('esCommon.serviceName') ?: $config['username']);
         if (is_array($to)) {
             foreach ($to as $toItem) {
                 $mail->addAddress($toItem);

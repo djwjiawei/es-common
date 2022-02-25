@@ -46,7 +46,7 @@ class ServiceProvider
         }
 
         //设置日志handler
-        $logger = new Logger();
+        $logger = Logger::getInstance();
         Di::getInstance()->set(SysConst::LOGGER_HANDLER, $logger);
         \EasySwoole\EasySwoole\Logger::getInstance($logger);
 

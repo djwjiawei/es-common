@@ -276,22 +276,16 @@ class TimeSizeHandler
     {
         switch ($this->dateFormat) {
             case 'H':
-                $date = date('Y-m-d H:00:00', strtotime("++{$this->intervalUnit}} hour"));
-
-                return strtotime($date);
+                return strtotime(date('Y-m-d H:00:00', strtotime("+{$this->intervalUnit} hour")));
 
             case 'i':
-                $date = date('Y-m-d H:i:00', strtotime("++{$this->intervalUnit}} minute"));
-
-                return strtotime($date);
+                return strtotime(date('Y-m-d H:i:00', strtotime("+{$this->intervalUnit} minute")));
 
             case 's':
                 return strtotime("+{$this->intervalUnit} second");
 
             default:
-                $date = date('Y-m-d H:00:00', strtotime("++{$this->intervalUnit}} hour"));
-
-                return strtotime($date);
+                return strtotime(date('Y-m-d H:00:00', strtotime("+{$this->intervalUnit} hour")));
         }
     }
 

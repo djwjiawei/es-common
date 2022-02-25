@@ -34,8 +34,8 @@ class ExceptionRedis extends AbstractRedisPool
             $this->connection = config('esCommon.exception.redis');
         }
 
-        if (config('esCommon.exception.mailTimeout')) {
-            $this->timeout = config('esCommon.exception.mailTimeout');
+        if (config('esCommon.exception.timeout')) {
+            $this->timeout = config('esCommon.exception.timeout');
         }
     }
 
