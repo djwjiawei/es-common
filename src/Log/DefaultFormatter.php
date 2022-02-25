@@ -55,7 +55,7 @@ class DefaultFormatter implements FormatterInterface
     {
         $time = new \DateTimeImmutable();
 
-        return $time->format('Y-m-d H:i:s:') . intval($time->format('u') / 1000);
+        return $time->format('Y-m-d H:i:s:') . substr($time->format('u'), 0, 3);
     }
 
 }

@@ -18,9 +18,11 @@ composer require es-swoole/common:(dev-master或具体tag)
 - [x] 日志格式化
 - [x] 请求链路日志记录
 - [x] 异常处理
+- [x] 异常邮件报告和钉钉报告
 - [x] http请求
 - [x] 邮件发送
 - [x] config包发布
+- [x] command加载
 - [x] 服务提供者功能
 - [x] 一些公共函数
 - [x] 向指定进程同步信息
