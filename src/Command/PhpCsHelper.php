@@ -107,9 +107,7 @@ trait PhpCsHelper
      */
     protected function getCachePath()
     {
-        $dir = sys_get_temp_dir() ?: '.';
-
-        return $dir . '/' . $this->cacheFile;
+        return EASYSWOOLE_ROOT . '/' . $this->cacheFile;
     }
 
     /**

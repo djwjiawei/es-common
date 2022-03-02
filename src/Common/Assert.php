@@ -69,7 +69,7 @@ class Assert
     public static function assertSuccessCode($code, string $message, $errCode = 0)
     {
         $result = static::equals($code, config('statusCode.success'), true);
-        static::throwException(!$result, $message, $errCode);
+        static::throwException($result, $message, $errCode);
     }
 
     /**
