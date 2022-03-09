@@ -8,6 +8,8 @@
 
 namespace EsSwoole\Base\Log;
 
+use EasySwoole\Utility\FileSystem;
+
 /**
  * Class TimeSizeHandler
  *
@@ -66,6 +68,13 @@ class TimeSizeHandler
      * @var string
      */
     protected $fileName;
+
+    /**
+     * 文件后缀
+     *
+     * @var string
+     */
+    protected $fileExtension = '';
 
     /**
      * 文件名日期格式
@@ -146,12 +155,20 @@ class TimeSizeHandler
             $this->intervalUnit = $intervalUnit;
         }
 
-        $this->rootPath = $rootPath;
+        //日志根目录
+        $this->rootPath = rtrim($rootPath, DIRECTORY_SEPARATOR);
 
-        $this->fileName = $filename;
+        //日志文件名
+        $fileInfoArr    = pathinfo($filename);
+        $this->fileName = $fileInfoArr['filename'];
+
+        //日志文件扩展名
+        if (isset($fileInfoArr['extension'])) {
+            $this->fileExtension = '.' . $fileInfoArr['extension'];
+        }
 
         //设置文件名
-        $this->url = canonicalizePath($this->getTimedFilename());
+        $this->url = canonicalizePath($this->getNewSizeFile(false));
 
         //设置下次轮转时间
         $this->nextRotation = $this->getNextRotationTime();
@@ -166,16 +183,19 @@ class TimeSizeHandler
      */
     public function write($msg): void
     {
-        //如果到下次轮转时间了,关闭上个资源,开启下此轮转
         if ($this->nextRotation <= time()) {
+            //如果到下次轮转时间了,关闭上个资源,开启下此轮转
             $this->timeMustRotate = true;
-            $this->fileMustRotate = true;
+            $this->close();
+        } elseif (is_resource($this->stream)) {
+            //这里需要清除文件缓存,不然filesize会一直保持不变
+            clearstatcache(true, $this->url);
 
-            $this->close();
-        } elseif (is_resource($this->stream) && filesize($this->url) >= $this->maxFileSize) {
-            //如果文件大小到了,直接开启新的资源,时间轮转保持不变
-            $this->fileMustRotate = true;
-            $this->close();
+            if (filesize($this->url) >= $this->maxFileSize) {
+                //如果文件大小到了,直接开启新的资源
+                $this->fileMustRotate = true;
+                $this->close();
+            }
         }
 
         $this->writeStream($msg);
@@ -229,40 +249,145 @@ class TimeSizeHandler
         $this->dirCreated = null;
 
         if ($this->timeMustRotate === true) {
+            //基于时间的轮转,直接生成下一个时间段的文件
             $this->nextRotation = $this->getNextRotationTime();
+            $this->url          = $this->getNewDateFile();
 
             $this->timeMustRotate = false;
-        }
-
-        if ($this->fileMustRotate === true) {
-            $this->url = $this->getTimedFilename();
+        } elseif ($this->fileMustRotate === true) {
+            //基于文件大小的轮转,在当前时间基础上 生成一个新的文件名
+            $this->url = $this->getNewSizeFile();
 
             $this->fileMustRotate = false;
         }
     }
 
     /**
-     * 获取当前小时的文件名
+     * 获取一个新的文件名
      *
      * @return string
      * User: dongjw
-     * Date: 2022/2/9 16:29
+     * Date: 2022/3/8 16:53
      */
-    protected function getTimedFilename(): string
+    protected function getNewDateFile()
     {
-        rtrim($this->rootPath, DIRECTORY_SEPARATOR);
+        return $this->getWriteDir() . DIRECTORY_SEPARATOR . $this->fileName . $this->getDateFileName() . $this->fileExtension;
+    }
 
-        //处理文件名 + 小时
-        $fileInfoArr = pathinfo($this->fileName);
+    /**
+     * 基于上一个文件大小生成一个新的文件名
+     *
+     * @param bool $force
+     *
+     * @return string
+     * User: dongjw
+     * Date: 2022/3/8 16:54
+     */
+    protected function getNewSizeFile($force = true)
+    {
+        //write的目录
+        $writeDir = $this->getWriteDir();
 
-        $timedFilename = $fileInfoArr['filename'] . '-' . (new \DateTimeImmutable())->format('H-i-s');
+        //需要匹配的上一个文件的文件前缀
+        $searchBefore = $this->fileName . $this->getDateFileName();
 
-        if (isset($fileInfoArr['extension'])) {
-            $timedFilename .= '.' . $fileInfoArr['extension'];
+        //遍历目录查找匹配的文件名
+        $lastFile = $this->getLastFileByScan();
+
+        if (!$lastFile) {
+            return $this->getNewDateFile();
         }
 
-        //根目录+年月日+文件名
-        return $this->rootPath . DIRECTORY_SEPARATOR . date('Y-m-d') . DIRECTORY_SEPARATOR . $timedFilename;
+        $endFile = $lastFile['file'];
+
+        //不强制生成的话,看上一个文件是否超过大小 没超过的话 直接返回上一个文件名
+        if (!$force) {
+            $endPath = $writeDir . DIRECTORY_SEPARATOR . $endFile;
+            if (filesize($endPath) < $this->maxFileSize) {
+                return $endPath;
+            }
+        }
+
+        //生成一个新的索引值
+        if ($lastFile['value']) {
+            $newIndexValue = $lastFile['value'] + 1;
+        } else {
+            $newIndexValue = 1;
+        }
+
+        return $writeDir . DIRECTORY_SEPARATOR . $searchBefore . '-' . $newIndexValue . $this->fileExtension;
+    }
+
+    /**
+     * 获取索引值最大的文件名
+     *
+     * @return array
+     * User: dongjw
+     * Date: 2022/3/8 17:46
+     */
+    protected function getLastFileByScan()
+    {
+        //需要匹配的上一个文件的文件前缀
+        $searchBefore = $this->fileName . $this->getDateFileName();
+
+        //遍历目录
+        $fileList = scandir($this->getWriteDir());
+        //匹配的文件列表
+        $matchFileArr = [];
+        foreach ($fileList as $file) {
+            $matchRes = strpos($file, $searchBefore);
+            if ($matchRes !== false) {
+                $matchFileArr[] = $file;
+            }
+
+            if ($matchRes === false && !empty($matchFileArr)) {
+                break;
+            }
+        }
+
+        if (!$matchFileArr) {
+            return [];
+        }
+
+        $maxIndex = 0;
+        $maxValue = '';
+        //获取最大的文件索引
+        foreach ($matchFileArr as $matchK => $file) {
+            //去掉文件名前缀
+            $afterFile = substr($file, strlen($searchBefore));
+
+            //去掉后缀
+            if ($this->fileExtension) {
+                $afterFile = substr($afterFile, 0, -1 * strlen($this->fileExtension));
+            }
+
+            $afterFileArr = explode('-', $afterFile);
+
+            //[1]即为当前文件名的索引值
+            $fileIndexValue = $afterFileArr[1] ?? '';
+
+            if ($fileIndexValue > $maxValue) {
+                $maxIndex = $matchK;
+                $maxValue = $fileIndexValue;
+            }
+        }
+
+        return [
+            'file'  => $matchFileArr[$maxIndex],
+            'value' => $maxValue,
+        ];
+    }
+
+    /**
+     * 获取写入的目录路径
+     *
+     * @return string
+     * User: dongjw
+     * Date: 2022/3/8 18:52
+     */
+    protected function getWriteDir()
+    {
+        return $this->rootPath . DIRECTORY_SEPARATOR . date('Y-m-d');
     }
 
     /**
@@ -290,6 +415,30 @@ class TimeSizeHandler
     }
 
     /**
+     * 获取对应时间的文件名格式
+     *
+     * @return string
+     * User: dongjw
+     * Date: 2022/3/8 18:55
+     */
+    protected function getDateFileName()
+    {
+        switch ($this->dateFormat) {
+            case 'H':
+                return '_' . date('H');
+
+            case 'i':
+                return '_' . date('H_i');
+
+            case 's':
+                return '_' . date('H_i_s');
+
+            default:
+                return '_' . date('H');
+        }
+    }
+
+    /**
      * 创建日志目录
      *
      * @param string $url
@@ -303,8 +452,9 @@ class TimeSizeHandler
         }
 
         $dir = dirname($url);
+
         if (null !== $dir && !is_dir($dir)) {
-            $status = @mkdir($dir, 0777, true);
+            $status = (new FileSystem())->makeDirectory($dir, 0777, true, true);
 
             if (false === $status && !is_dir($dir)) {
                 throw new \UnexpectedValueException(

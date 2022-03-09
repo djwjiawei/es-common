@@ -99,9 +99,8 @@ class PhpCodeFix implements CommandInterface
         );
 
         if ($runRes) {
-            return Color::success('fix success');
+            return '';
         } else {
-            echo Color::error('There are other bugs after the fix') . PHP_EOL;
             exit(1);
         }
     }

@@ -171,6 +171,38 @@ class Assert
     }
 
     /**
+     * 断言是否为null
+     *
+     * @param mixed  $expected
+     * @param string $message
+     * @param int    $errCode
+     *
+     * @throws LogicAssertException
+     * User: dongjw
+     * Date: 2022/3/4 16:31
+     */
+    public static function assertIsNull($expected, string $message, $errCode = 0)
+    {
+        static::throwException(is_null($expected), $message, $errCode);
+    }
+
+    /**
+     * 断言不为null
+     *
+     * @param mixed  $expected
+     * @param string $message
+     * @param int    $errCode
+     *
+     * @throws LogicAssertException
+     * User: dongjw
+     * Date: 2022/3/4 16:31
+     */
+    public static function assertNotIsNull($expected, string $message, $errCode = 0)
+    {
+        static::throwException(!is_null($expected), $message, $errCode);
+    }
+
+    /**
      * 检测等于
      *
      * @param mixed $expected
