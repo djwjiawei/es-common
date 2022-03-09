@@ -38,16 +38,14 @@ class ExceptionHandler
         //设置set_exception_handler
         Di::getInstance()->set(
             SysConst::HTTP_EXCEPTION_HANDLER, function ($throwable, $request, $response) {
-                $msg  = '';
                 $data = [];
 
             //如果是生产环境，不显示详细错误
                 if (AppUtil::isProd()) {
-                    if (!($throwable instanceof ApiException)) {
-                        $msg = '系统异常';
-                    }
+                    $msg = '系统异常';
                 } else {
                     //测试环境返回trace信息
+                    $msg           = $throwable->getMessage();
                     $data['trace'] = $throwable->getTraceAsString();
                 }
 
@@ -139,7 +137,9 @@ class ExceptionHandler
         }
 
         foreach (config('esCommon.exception.report') as $type => $config) {
-            if (empty($config['handle']) || !is_subclass_of($config['handle'], ReportInterface::class) || empty($config['isReport'])) {
+            if (empty($config['handle']) || !is_subclass_of(
+                $config['handle'], ReportInterface::class
+            ) || empty($config['isReport'])) {
                 continue;
             }
 

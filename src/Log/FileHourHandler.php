@@ -8,6 +8,7 @@
 
 namespace EsSwoole\Base\Log;
 
+use EasySwoole\Utility\FileSystem;
 use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
@@ -310,9 +311,10 @@ class FileHourHandler extends AbstractProcessingHandler
             return;
         }
 
-        $dir = $this->getDirFromStream($url);
+        $dir = dirname($url);
+
         if (null !== $dir && !is_dir($dir)) {
-            $status = @mkdir($dir, 0777, true);
+            $status = (new FileSystem())->makeDirectory($dir, 0777, true, true);
 
             if (false === $status && !is_dir($dir)) {
                 throw new \UnexpectedValueException(

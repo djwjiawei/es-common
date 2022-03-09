@@ -16,14 +16,16 @@ if (!function_exists('config')) {
      * 获取配置
      *
      * @param string $key
+     * @param mixed  $default
      *
      * @return array|mixed|null
      * User: dongjw
      * Date: 2021/11/19 15:03
      */
-    function config($key)
+    function config($key, $default = null)
     {
-        return Config::getInstance()->getConf($key);
+        $res = Config::getInstance()->getConf($key);
+        return is_null($res) ? $default : $res;
     }
 }
 

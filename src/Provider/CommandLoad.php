@@ -61,7 +61,7 @@ class CommandLoad
 
                 CommandManager::getInstance()->addCommand($obj);
 
-                echo Color::info('find command: ' . $commandItem) . PHP_EOL;
+//                echo Color::info('find command: ' . $commandItem) . PHP_EOL;
             }
         }
 
