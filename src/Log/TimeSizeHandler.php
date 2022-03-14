@@ -159,7 +159,7 @@ class TimeSizeHandler
         $this->rootPath = rtrim($rootPath, DIRECTORY_SEPARATOR);
 
         //日志文件名
-        $fileInfoArr    = pathinfo($filename);
+        $fileInfoArr = pathinfo($filename);
         $this->fileName = $fileInfoArr['filename'];
 
         //日志文件扩展名
@@ -245,13 +245,13 @@ class TimeSizeHandler
             fclose($this->stream);
         }
 
-        $this->stream     = null;
+        $this->stream = null;
         $this->dirCreated = null;
 
         if ($this->timeMustRotate === true) {
             //基于时间的轮转,直接生成下一个时间段的文件
             $this->nextRotation = $this->getNextRotationTime();
-            $this->url          = $this->getNewDateFile();
+            $this->url = $this->getNewDateFile();
 
             $this->timeMustRotate = false;
         } elseif ($this->fileMustRotate === true) {
@@ -271,7 +271,8 @@ class TimeSizeHandler
      */
     protected function getNewDateFile()
     {
-        return $this->getWriteDir() . DIRECTORY_SEPARATOR . $this->fileName . $this->getDateFileName() . $this->fileExtension;
+        return $this->getWriteDir() . DIRECTORY_SEPARATOR . $this->fileName . $this->getDateFileName(
+            ) . $this->fileExtension;
     }
 
     /**
@@ -292,7 +293,10 @@ class TimeSizeHandler
         $searchBefore = $this->fileName . $this->getDateFileName();
 
         //遍历目录查找匹配的文件名
-        $lastFile = $this->getLastFileByScan();
+        $lastFile = [];
+        if (is_dir($writeDir)) {
+            $lastFile = $this->getLastFileByScan();
+        }
 
         if (!$lastFile) {
             return $this->getNewDateFile();
