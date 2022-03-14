@@ -42,8 +42,8 @@ class MailReport implements ReportInterface
 
         $body = '<b>服务器ip：</b>' . gethostbyname(gethostname()) .
                 '<hr/><b>文件地址：</b>' . $file .
-                '<hr/><b>错误编码：</b>' . $code .
-                '<hr/><b>行数：</b>' . $line . '<hr/>';
+                '<hr/><b>行数：</b>' . $line .
+                '<hr/><b>错误编码：</b>' . $code . '<hr/>';
 
         $runEnv = $afterBody = '';
 

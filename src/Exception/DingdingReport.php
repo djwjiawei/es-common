@@ -42,8 +42,8 @@ class DingdingReport implements ReportInterface
 
         $body = '服务器ip：' . gethostbyname(gethostname()) . PHP_EOL .
                 '文件地址：' . $file . PHP_EOL .
-                '错误编码：' . $code . PHP_EOL .
-                '行数：' . $line . PHP_EOL;
+                '行数：' . $line . PHP_EOL .
+                '错误编码：' . $code . PHP_EOL;
 
         $runEnv = $afterBody = '';
 
