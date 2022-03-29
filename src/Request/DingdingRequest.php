@@ -17,6 +17,8 @@ class DingdingRequest extends AbstractRequest
 {
     const SEND_ROBOT_URL = '/robot/send';
 
+    protected $isLog = false;
+
     /**
      * DingdingRequest constructor.
      */

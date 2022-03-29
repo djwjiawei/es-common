@@ -23,11 +23,12 @@ interface ReportInterface
      * @param mixed        $config
      * @param Request|null $request
      * @param \Throwable   $exception
+     * @param string       $traceId
      * @param string       $msg
      *
      * @return mixed
      * User: dongjw
      * Date: 2022/2/25 15:16
      */
-    public static function report($config, $request, \Throwable $exception, $msg = '');
+    public static function report($config, $request, \Throwable $exception, $traceId = '', $msg = '');
 }

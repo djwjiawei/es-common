@@ -303,6 +303,10 @@ if (!function_exists('strIndexReplace')) {
     function strIndexReplace($str, $start, $endIndex, $replace = '*')
     {
         $len = mb_strlen($str);
+        if ($len == 1) {
+            return $str;
+        }
+
         if ($endIndex > 0) {
             $realEndIndex = $endIndex + 1;
         } else {
