@@ -30,7 +30,7 @@ class DingdingReport implements ReportInterface
      * User: dongjw
      * Date: 2022/2/25 16:36
      */
-    public static function report($config, $request, \Throwable $exception, $msg = '')
+    public static function report($config, $request, \Throwable $exception, $traceId = '', $msg = '')
     {
         if (empty($config['token'])) {
             return false;
@@ -69,7 +69,15 @@ class DingdingReport implements ReportInterface
 
         $des        = $msg ?: $exception->getMessage();
         $errorMsg   = '错误描述：' . $des . PHP_EOL;
-        $errorTrace = '错误trace：' . PHP_EOL . $exception->getTraceAsString();
+
+        if ($traceId) {
+            $errorTrace = '错误trace ' . $traceId . '：';
+        } else {
+            $errorTrace = '错误trace：';
+        }
+
+        $errorTrace .=  PHP_EOL . $exception->getTraceAsString();
+
         //发送的邮件主题
         $subject = '【' .config('esCommon.serviceName') . ' ' . config('RUN_ENV') . "环境】{$runEnv}错误报告【" . date('Y-m-d H:i:s') . '】' . PHP_EOL;
 

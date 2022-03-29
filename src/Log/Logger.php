@@ -32,7 +32,7 @@ class Logger implements LoggerInterface
     private $logDir;
 
     /**
-     * MonoLog日志处理器
+     * 日志处理器
      *
      * @var array TimeSizeHandler
      */

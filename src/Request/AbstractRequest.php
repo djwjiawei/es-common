@@ -192,7 +192,7 @@ abstract class AbstractRequest
                     'response' => $res->getBody(),
                     'elapsed'  => $endTime - $startTime,
                     'code'     => $res->getStatusCode(),
-                    'err_no'   => $res->getErrCode(),
+                    'errNo'   => $res->getErrCode(),
                     'msg'      => $res->getErrMsg(),
                 ]
             );

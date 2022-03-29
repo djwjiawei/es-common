@@ -30,7 +30,7 @@ class MailReport implements ReportInterface
      * User: dongjw
      * Date: 2022/2/25 16:36
      */
-    public static function report($config, $request, \Throwable $exception, $msg = '')
+    public static function report($config, $request, \Throwable $exception, $traceId = '', $msg = '')
     {
         if (empty($config['sendBugMail'])) {
             return;
@@ -69,7 +69,14 @@ class MailReport implements ReportInterface
 
         $des        = $msg ?: $exception->getMessage();
         $errorMsg   = '<b>错误描述：</b>' . $des . '<hr/>';
-        $errorTrace = '<b>错误trace：</b><br/>' . $exception->getTraceAsString();
+
+        if ($traceId) {
+            $errorTrace = '<b>错误trace ' . $traceId . '：</b><br/>';
+        } else {
+            $errorTrace = '<b>错误trace：</b><br/>';
+        }
+
+        $errorTrace .= $exception->getTraceAsString();
         //发送的邮件主题
         $subject = '【' . config('APP_ENV') . "环境】{$runEnv}错误报告【" . date('Y-m-d H:i:s') . '】';
 
