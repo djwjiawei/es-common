@@ -42,11 +42,6 @@ class ServiceProvider
         ConfigLoad::loadFile('esCommon', configPath('esCommon.php'));
         ConfigLoad::loadFile('statusCode', configPath('statusCode.php'));
 
-        //协程hook处理
-        if (config('esCommon.swooleHook')) {
-            \Co::set(['hook_flags' => config('esCommon.swooleHook')]);
-        }
-
         //设置日志handler
         $logger = Logger::getInstance();
         Di::getInstance()->set(SysConst::LOGGER_HANDLER, $logger);

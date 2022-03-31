@@ -25,6 +25,9 @@ class AppUtil
     //生产环境
     const PROD_ENV = 'prod';
 
+    //本地ip
+    protected static $localIp = '';
+
     /**
      * 是否是生产环境
      *
@@ -73,6 +76,22 @@ class AppUtil
         $unit = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
 
         return round($size / pow(1024, ($i = floor(log($size, 1024)))), $precision) . $unit[$i];
+    }
+
+    /**
+     * 获取本地ip地址
+     *
+     * @return mixed|string
+     * User: dongjw
+     * Date: 2022/3/31 14:30
+     */
+    public static function getLocalIp()
+    {
+        if (!self::$localIp) {
+            self::$localIp = swoole_get_local_ip()['eth0'] ?? '';
+        }
+
+        return self::$localIp;
     }
 
 }

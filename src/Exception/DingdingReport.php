@@ -10,6 +10,7 @@ namespace EsSwoole\Base\Exception;
 
 use EasySwoole\Http\Request;
 use EsSwoole\Base\Request\DingdingRequest;
+use EsSwoole\Base\Util\AppUtil;
 
 /**
  * 钉钉报告
@@ -40,7 +41,7 @@ class DingdingReport implements ReportInterface
         $line = $exception->getLine();
         $code = $exception->getCode();
 
-        $body = '服务器ip：' . gethostbyname(gethostname()) . PHP_EOL .
+        $body = '服务器ip：' . AppUtil::getLocalIp() . PHP_EOL .
                 '文件地址：' . $file . PHP_EOL .
                 '行数：' . $line . PHP_EOL .
                 '错误编码：' . $code . PHP_EOL;
