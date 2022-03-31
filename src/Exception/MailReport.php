@@ -10,6 +10,7 @@ namespace EsSwoole\Base\Exception;
 
 use EasySwoole\Http\Request;
 use EsSwoole\Base\Common\Mail;
+use EsSwoole\Base\Util\AppUtil;
 
 /**
  * 邮件报告
@@ -40,7 +41,7 @@ class MailReport implements ReportInterface
         $line = $exception->getLine();
         $code = $exception->getCode();
 
-        $body = '<b>服务器ip：</b>' . gethostbyname(gethostname()) .
+        $body = '<b>服务器ip：</b>' . AppUtil::getLocalIp() .
                 '<hr/><b>文件地址：</b>' . $file .
                 '<hr/><b>行数：</b>' . $line .
                 '<hr/><b>错误编码：</b>' . $code . '<hr/>';
