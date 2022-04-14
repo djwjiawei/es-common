@@ -69,7 +69,7 @@ class Assert
     public static function assertSuccessCode($code, string $message, $errCode = 0)
     {
         $result = static::equals($code, config('statusCode.success'), true);
-        static::throwException(!$result, $message, $errCode);
+        static::throwException($result, $message, $errCode);
     }
 
     /**
@@ -168,6 +168,38 @@ class Assert
     public static function assertNotEmpty($expected, string $message, $errCode = 0)
     {
         static::throwException(!empty($expected), $message, $errCode);
+    }
+
+    /**
+     * 断言是否为null
+     *
+     * @param mixed  $expected
+     * @param string $message
+     * @param int    $errCode
+     *
+     * @throws LogicAssertException
+     * User: dongjw
+     * Date: 2022/3/4 16:31
+     */
+    public static function assertIsNull($expected, string $message, $errCode = 0)
+    {
+        static::throwException(is_null($expected), $message, $errCode);
+    }
+
+    /**
+     * 断言不为null
+     *
+     * @param mixed  $expected
+     * @param string $message
+     * @param int    $errCode
+     *
+     * @throws LogicAssertException
+     * User: dongjw
+     * Date: 2022/3/4 16:31
+     */
+    public static function assertNotIsNull($expected, string $message, $errCode = 0)
+    {
+        static::throwException(!is_null($expected), $message, $errCode);
     }
 
     /**

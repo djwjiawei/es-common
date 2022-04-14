@@ -32,7 +32,7 @@ class Logger implements LoggerInterface
     private $logDir;
 
     /**
-     * MonoLog日志处理器
+     * 日志处理器
      *
      * @var array TimeSizeHandler
      */
@@ -168,7 +168,7 @@ class Logger implements LoggerInterface
             }
 
             if ($tempLocation['class'] == \EasySwoole\EasySwoole\Logger::class) {
-                $tempBeforeLocation = $tempLocation;
+                $tempBeforeLocation = $logLocation = $tempLocation;
             } else {
                 //如果不是说明调用log停止
                 $logLocation = $tempBeforeLocation ?? null;

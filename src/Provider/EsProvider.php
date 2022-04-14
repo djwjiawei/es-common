@@ -12,6 +12,7 @@ use EasySwoole\EasySwoole\ServerManager;
 use EasySwoole\Task\AbstractInterface\TaskInterface;
 use EsSwoole\Base\Abstracts\ProcessMessageInterface;
 use EsSwoole\Base\Common\ConfigLoad;
+use EsSwoole\Base\Common\Event;
 use EsSwoole\Base\Common\Prometheus;
 use EasySwoole\Component\Di;
 use EsSwoole\Base\Abstracts\AbstractProvider;
@@ -46,6 +47,18 @@ class EsProvider extends AbstractProvider
 
         //中间件初始化
         MiddlewareManager::getInstance();
+
+        //worker进程启动事件
+        Event::getInstance()->add(Event::WORKER_PROCESS_START_EVENT, function () {
+            //重新播种,以防子进程随机数有问题
+            mt_srand();
+        });
+
+        //自定义进程启动事件
+        Event::getInstance()->add(Event::USER_PROCESS_START_EVENT, function () {
+            //重新播种,以防子进程随机数有问题
+            mt_srand();
+        });
     }
 
     /**
@@ -56,6 +69,8 @@ class EsProvider extends AbstractProvider
     public function boot()
     {
         $register = ServerManager::getInstance()->getEventRegister();
+
+        //Worker进程收到消息事件
         $register->add($register::onPipeMessage, function ($serv, $srcWorkerId, $message) {
             $task = unserialize($message);
             if (is_callable($task)) {
@@ -73,6 +88,12 @@ class EsProvider extends AbstractProvider
                     $task->onException($throwable);
                 }
             }
+        });
+
+        //Worker进程启动事件
+        $register->add($register::onWorkerStart, function () {
+            //触发worker进程启动事件
+            Event::getInstance()->hook(Event::WORKER_PROCESS_START_EVENT);
         });
     }
 }

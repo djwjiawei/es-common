@@ -8,15 +8,16 @@
 
 namespace EsSwoole\Base\Exception;
 
-use EsSwoole\Base\Common\Mail;
+use EasySwoole\EasySwoole\Logger;
+use EsSwoole\Base\Log\TriggerHandle;
 use EsSwoole\Base\Util\AppUtil;
 use EsSwoole\Base\Redis\ExceptionRedis;
 use EasySwoole\Component\Di;
 use EasySwoole\EasySwoole\SysConst;
 use EasySwoole\EasySwoole\Trigger;
 use EasySwoole\Http\Message\Status;
-use EasySwoole\Trigger\Location;
 use EsSwoole\Base\Util\RequestUtil;
+use EsSwoole\Base\Util\TraceIdUtil;
 
 /**
  * 异常处理器
@@ -38,80 +39,64 @@ class ExceptionHandler
         //设置set_exception_handler
         Di::getInstance()->set(
             SysConst::HTTP_EXCEPTION_HANDLER, function ($throwable, $request, $response) {
-                $msg  = '';
-                $data = [];
+            $data = [];
 
             //如果是生产环境，不显示详细错误
-                if (AppUtil::isProd()) {
-                    if (!($throwable instanceof ApiException)) {
-                        $msg = '系统异常';
-                    }
-                } else {
-                    //测试环境返回trace信息
-                    $data['trace'] = $throwable->getTraceAsString();
-                }
+            if (AppUtil::isProd()) {
+                $msg = '系统异常';
+            } else {
+                //测试环境返回trace信息
+                $msg           = $throwable->getMessage();
+                $data['trace'] = $throwable->getTraceAsString();
+            }
 
-                $data['traceId'] = getTraceId();
+            $data['traceId'] = getTraceId();
 
-            //error的已经在set_error_handler中记录了，这里只记录exception的
-                if (!($throwable instanceof ErrorException)) {
-                    Trigger::getInstance()->throwable($throwable);
-                }
+            //记录trigger日志
+            Trigger::getInstance()->throwable($throwable);
 
             //设置响应头：500
-                $response->withStatus(Status::CODE_INTERNAL_SERVER_ERROR);
+            $response->withStatus(Status::CODE_INTERNAL_SERVER_ERROR);
 
             //输出异常返回
-                RequestUtil::outJson(
-                    $response, LogicAssertException::getErrCode(LogicAssertException::NO_CATCH_CODE), $msg, [], $data
-                );
+            RequestUtil::outJson(
+                $response, LogicAssertException::getErrCode(LogicAssertException::NO_CATCH_CODE), $msg, [], $data
+            );
 
-            //发送邮件
-                go(
-                    function () use ($throwable) {
-                        ExceptionHandler::report($throwable);
-                    }
-                );
-            }
+            //异常报告
+            go(
+                function () use ($throwable) {
+                    ExceptionHandler::report($throwable);
+                }
+            );
+        }
         );
 
         //设置set_error_handler
         Di::getInstance()->set(
             SysConst::ERROR_HANDLER, function ($errorCode, $description, $file = null, $line = null) {
-                if (error_reporting() & $errorCode) {
-                    $l = new Location();
-                    $l->setFile($file);
-                    $l->setLine($line);
-                    Trigger::getInstance()->error($description, $errorCode, $l);
-
-                    $exception = new ErrorException($description, $errorCode, $file, $line);
-                    if (RequestUtil::getRequest()) {
-                        //如果是在http请求内，则统一让http exception处理
-                        throw $exception;
-                    } else {
-                        //不在http请求内，发送邮件
-                        ExceptionHandler::report($exception);
-                    }
-                }
+            if (error_reporting() & $errorCode) {
+                throw new ErrorException($description, $errorCode, $file, $line);
             }
+        }
         );
 
         //设置register_shutdown_function
         Di::getInstance()->set(
             SysConst::SHUTDOWN_FUNCTION, function () {
             //只对非worker进程记录日志，worker进程在EasySwooleEvent onRequest全局事件中单独处理
-                $error = error_get_last();
-                if ($error) {
-                    $l = new Location();
-                    $l->setFile($error['file']);
-                    $l->setLine($error['line']);
-                    $message = 'shutdown错误: ' . $error['message'];
-                    Trigger::getInstance()->error($message, $error['type'], $l);
+            $error = error_get_last();
+            if ($error) {
+                $message = 'shutdown错误: ' . $error['message'];
 
-                    //register_shut_down回调方法里协程已经不能用了，也不能用go开启协程
-                    //ExceptionHandler::report(new \ErrorException($message,-1,$error['type'],$error['file'],$error['line']));
-                }
+                Logger::getInstance()->error(
+                    "{$message} at file:{$error['file']} line:{$error['line']}", TriggerHandle::TRIGGER_NAME
+                );
+
+                //register_shut_down回调方法里协程已经不能用了，也不能用go开启协程
+                //ExceptionHandler::report(new \ErrorException($message,-1,$error['type'],$error['file'],$error['line']));
             }
+        }
         );
     }
 
@@ -129,21 +114,41 @@ class ExceptionHandler
             return false;
         }
 
+        //获取请求
         $request = RequestUtil::getRequest();
 
         $file = $exception->getFile();
         $line = $exception->getLine();
+
+        //获取当前协程traceid
+        $traceId = TraceIdUtil::getCurrentTraceId();
 
         if (!ExceptionRedis::getInstance()->check(md5($file . $line))) {
             return;
         }
 
         foreach (config('esCommon.exception.report') as $type => $config) {
-            if (empty($config['handle']) || !is_subclass_of($config['handle'], ReportInterface::class) || empty($config['isReport'])) {
+            if (empty($config['handle']) || !is_subclass_of(
+                    $config['handle'], ReportInterface::class
+                ) || empty($config['isReport'])) {
                 continue;
             }
 
-            $config['handle']::report($config, $request, $exception, $msg);
+            $config['handle']::report($config, $request, $exception, $traceId, $msg);
         }
+    }
+
+    /**
+     * 记录异常并发送报告
+     *
+     * @param \Throwable $exception
+     * @param string     $msg
+     * User: dongjw
+     * Date: 2022/3/23 16:59
+     */
+    public static function logReport(\Throwable $exception, $msg = '')
+    {
+        Trigger::getInstance()->throwable($exception);
+        self::report($exception, $msg);
     }
 }

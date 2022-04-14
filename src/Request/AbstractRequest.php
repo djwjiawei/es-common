@@ -82,6 +82,20 @@ abstract class AbstractRequest
     protected $response;
 
     /**
+     * 是否记录日志
+     *
+     * @var bool
+     */
+    protected $isLog = true;
+
+    /**
+     * 请求日志文件
+     *
+     * @var string
+     */
+    protected $logFile = HttpClientLog::HTTP_REQUEST;
+
+    /**
      * 获取请求的host
      *
      * @return string
@@ -157,31 +171,34 @@ abstract class AbstractRequest
             $res = $client->delete();
         }
 
-        $endTime = getCurrentMilliseconds();
+        //isLog或有错误时记日志
+        if ($this->isLog || ($res->getErrCode() != 0)) {
+            $endTime = getCurrentMilliseconds();
 
-        if ($res->getErrCode() == 0) {
-            $tag      = HttpClientLog::LOG_HTTP_SUCCESS;
-            $logLevel = LoggerInterface::LOG_LEVEL_INFO;
-        } else {
-            $tag      = HttpClientLog::LOG_HTTP_FAILURE;
-            $logLevel = LoggerInterface::LOG_LEVEL_ERROR;
+            if ($res->getErrCode() == 0) {
+                $tag      = HttpClientLog::LOG_HTTP_SUCCESS;
+                $logLevel = LoggerInterface::LOG_LEVEL_INFO;
+            } else {
+                $tag      = HttpClientLog::LOG_HTTP_FAILURE;
+                $logLevel = LoggerInterface::LOG_LEVEL_ERROR;
+            }
+
+            $msg = HttpClientLog::formatHttpLog(
+                [
+                    'logTag'   => $tag,
+                    'callee'   => $apiDomain,
+                    'request'  => $logParams,
+                    'uri'      => $logAction,
+                    'response' => $res->getBody(),
+                    'elapsed'  => $endTime - $startTime,
+                    'code'     => $res->getStatusCode(),
+                    'errNo'   => $res->getErrCode(),
+                    'msg'      => $res->getErrMsg(),
+                ]
+            );
+
+            Logger::getInstance()->log($msg, $logLevel, $this->logFile);
         }
-
-        $msg = HttpClientLog::formatHttpLog(
-            [
-                'logTag'   => $tag,
-                'callee'   => $apiDomain,
-                'request'  => $logParams,
-                'uri'      => $logAction,
-                'response' => $res->getBody(),
-                'elapsed'  => $endTime - $startTime,
-                'code'     => $res->getStatusCode(),
-                'err_no'   => $res->getErrCode(),
-                'msg'      => $res->getErrMsg(),
-            ]
-        );
-
-        Logger::getInstance()->log($msg, $logLevel, HttpClientLog::HTTP_REQUEST);
 
         $this->response = $res;
 

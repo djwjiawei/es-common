@@ -11,9 +11,11 @@ namespace EsSwoole\Base\Provider;
 use EasySwoole\Component\Di;
 use EasySwoole\Component\Singleton;
 use EasySwoole\EasySwoole\SysConst;
+use EasySwoole\EasySwoole\Trigger;
 use EsSwoole\Base\Common\Composer;
 use EsSwoole\Base\Common\ConfigLoad;
 use EsSwoole\Base\Log\Logger;
+use EsSwoole\Base\Log\TriggerHandle;
 
 /**
  * Class ServiceProvider
@@ -40,15 +42,15 @@ class ServiceProvider
         ConfigLoad::loadFile('esCommon', configPath('esCommon.php'));
         ConfigLoad::loadFile('statusCode', configPath('statusCode.php'));
 
-        //协程hook处理
-        if (config('esCommon.swooleHook')) {
-            \Co::set(['hook_flags' => config('esCommon.swooleHook')]);
-        }
-
         //设置日志handler
         $logger = Logger::getInstance();
         Di::getInstance()->set(SysConst::LOGGER_HANDLER, $logger);
         \EasySwoole\EasySwoole\Logger::getInstance($logger);
+
+        //设置trigger
+        $triggerHandle = new TriggerHandle();
+        Di::getInstance()->set(SysConst::TRIGGER_HANDLER, $triggerHandle);
+        Trigger::getInstance($triggerHandle);
 
         //替换框架内的AbstractProcess,用来分发进程启动事件
         file_put_contents(

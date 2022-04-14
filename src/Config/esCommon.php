@@ -8,8 +8,6 @@
 return [
     //服务名
     'serviceName' => '{}服务',
-    //swoole一键协程化
-    'swooleHook' => SWOOLE_HOOK_ALL | SWOOLE_HOOK_CURL,
     //钉钉api host
     'dingdingHost' => 'https://oapi.dingtalk.com',
     //异常配置
