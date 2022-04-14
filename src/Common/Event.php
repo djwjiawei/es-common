@@ -26,6 +26,11 @@ class Event extends MultiContainer
     const USER_PROCESS_START_EVENT = 'processStart';
 
     /**
+     * Worker进程启动事件
+     */
+    const WORKER_PROCESS_START_EVENT = 'workerProcessStart';
+
+    /**
      * Hook
      *
      * @param string $event
